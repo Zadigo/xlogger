@@ -121,23 +121,25 @@ func readFile(path string) ([]string, error) {
 func main() {
 	logs, err := readFile("example2.log")
 
-	fmt.Println(logs)
-
 	if err != nil {
 		log.Fatal("Could not read file")
 	}
 
+	// Create a connection to the database (sqlite by default)
+	// and register the lines in the tables
+	// dbConnection, err := utils.DbConnection()
+
 	for i, value := range logs {
 		result, err := parseLine(value)
 
-		if err != nil {
-			log.Printf("Could not parse line %v: %v", i, err.Error())
-			continue
+		if err == nil {
+			fmt.Println(result.remoteAddress, result.method, result.path, result.statusCode, result.isSuccess)
+		} else {
+			log.Fatal("Could not parse line:", i, err.Error())
 		}
-		fmt.Println(result)
 	}
 
-	// var line string = `172.21.0.2 - - [08/May/2025:13:53:52 +0000] "GET /techs/societeinfo.png HTTP/1.1" 200 33239 "https://johnpm.gency313.fr/growth-marketing/tech" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"`
+	// var line string = `172.21.0.2 - - [08/May/2025:13:53:52 +0000] "GET /techs/societeinfo.png HTTP/1.1" 200 33239 "https://example.site.fr/growth-marketing/tech" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"`
 	// result, err := parseLine(line)
 
 	// if err != nil {
