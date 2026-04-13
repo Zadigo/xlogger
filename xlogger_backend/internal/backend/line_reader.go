@@ -8,6 +8,7 @@ import (
 )
 
 type LogLine struct {
+	RawLine string `json:"raw_line"`
 	// The IP address of the client
 	RemoteAddress string `json:"remote_address"`
 	// The authenticated user
@@ -51,48 +52,36 @@ func AnalyzePath(logLine LogLine) string {
 }
 
 // Parses a line of the log file and returns a LogLine struct
-func ParseLine(textValue string) (LogLine, error) {
+func (l LogLine) ParseLine() (LogLine, error) {
 	logLineRegex := regexp.MustCompile(`^(\S+) - (\S+) \[([^\]]+)\] "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH) ([^"]+) (HTTP\/[0-9\.]+)" (\d{3}) (\d+) "([^"]*)" "([^"]*)"$`)
 
-	var matched []string = logLineRegex.FindStringSubmatch(textValue)
+	var matched []string = logLineRegex.FindStringSubmatch(l.RawLine)
 	if matched == nil {
-		return LogLine{}, fmt.Errorf("🔴 Line is not valid %s", textValue)
+		return LogLine{}, fmt.Errorf("🔴 Line is not valid %s", l.RawLine)
 	}
 
 	status, _ := strconv.Atoi(matched[7])
-	bytes, _ := strconv.Atoi(matched[8])
+	l.IsSuccess = AnalyzeStatusCode(status)
+	
+	l.RemoteAddress = matched[1]
+	l.RemoteUser = matched[2]
+	l.DateTime = matched[3]
+	l.Method = matched[4]
+	l.Path = matched[5]
+	l.Protocole = matched[6]
+	l.StatusCode = status
+	l.Referrer = matched[8]
+	l.UserAgent = matched[9]
+	l.BodyBytesSent, _ = strconv.Atoi(matched[7])
 
-	// Parse the actual date and time from
-	// the datetime string that we got
-
-	var remoteDate string
-	var remoteTime string
-
+	// Date parsing
 	dateLayout := "02/Jan/2006:15:04:05 -0700"
 	parsedDate, err := time.Parse(dateLayout, matched[3])
 
 	if err == nil {
-		remoteDate = parsedDate.Format("2006-01-02")
-		remoteTime = parsedDate.Format("15:04:05")
+		l.RemoteDate = parsedDate.Format("2006-01-02")
+		l.RemoteTime = parsedDate.Format("15:04:05")
 	}
 
-	logLine := LogLine{
-		RemoteAddress: matched[1],
-		RemoteUser:    matched[2],
-		DateTime:      matched[3],
-		Method:        matched[4],
-		Path:          matched[5],
-		Protocole:     matched[6],
-		StatusCode:    status,
-		BodyBytesSent: bytes,
-		Referrer:      matched[9],
-		UserAgent:     matched[10],
-
-		RemoteDate: remoteDate,
-		RemoteTime: remoteTime,
-
-		IsSuccess: AnalyzeStatusCode(status),
-	}
-
-	return logLine, nil
+	return l, nil
 }

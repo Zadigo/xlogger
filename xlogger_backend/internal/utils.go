@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"log"
 	"os"
+
+	"github.com/Zadigo/xlogger_backend/internal/backend"
 )
 
 // Reads the log file and returns an array of strings
 // representing each line in the file
-func ReadFile(path string) ([]string, error) {
+func ReadFile(path string, serverConfig *backend.ServerConfig) ([]string, error) {
 	file, err := os.Open(path)
 
 	var logs []string = make([]string, 0)

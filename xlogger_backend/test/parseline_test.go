@@ -31,7 +31,7 @@ func TestParseLine(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("Extract simple line", func(t *testing.T) {
-			result, err := backend.ParseLine(tc.testLine)
+			result, err := backend.LogLine{RawLine: tc.testLine}.ParseLine()
 			assert.NoError(t, err)
 			assert.NotNil(t, result.RemoteDate)
 			assert.NotNil(t, result.RemoteAddress)
