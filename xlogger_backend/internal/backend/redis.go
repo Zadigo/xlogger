@@ -6,8 +6,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func NewRedisClient() *redis.Client {
-	options, err := redis.ParseURL("redis://@localhost:6379/0")
+func NewRedisClient(serverConfig *ServerConfig) *redis.Client {
+	options, err := redis.ParseURL(serverConfig.Config.Redis.Url)
 	if err != nil {
 		panic(err)
 	}

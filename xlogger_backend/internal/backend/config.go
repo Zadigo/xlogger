@@ -17,14 +17,19 @@ type DbConfig struct {
 }
 
 type LogsFolderConfig struct {
-	Name      string
-	FileRegex string
+	Name string
+	// FileRegex string
+}
+
+type RedisConfig struct {
+	Url string
 }
 
 type AllConfig struct {
 	// Cron expression for the scheduler to run the job
 	Analysis   string
 	Db         DbConfig
+	Redis      RedisConfig
 	LogsFolder LogsFolderConfig
 }
 
@@ -38,6 +43,7 @@ func NewServerConfig() *ServerConfig {
 
 func GetServerConfig() *ServerConfig {
 	currentPath, err := os.Getwd()
+
 	if err != nil {
 		panic("🔴 Could not get current path")
 	}
