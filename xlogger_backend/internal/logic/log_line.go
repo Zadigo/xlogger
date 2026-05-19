@@ -1,4 +1,4 @@
-package backend
+package logic
 
 import (
 	"fmt"
@@ -9,23 +9,37 @@ import (
 	"time"
 )
 
-// MetaData struct contains various boolean fields that indicate 
+// MetaData struct contains various boolean fields that indicate
 // specific characteristics of the path of the request which can
 // be useful for further vulnerability analysis.
 type MetaData struct {
-	IsPHP            bool `json:"is_php"`
-	IsAssets         bool `json:"is_assets"`
-	IsJS             bool `json:"is_js"`
-	IsHTTP2          bool `json:"is_http2"`
-	IsRobotsTxt      bool `json:"is_robots_txt"`
-	IsXml            bool `json:"is_xml"`
+	// IsPHP indicates if the request is for a PHP file or contains "php" in the path
+	IsPHP bool `json:"is_php"`
+	// IsAssets indicates if the request is for a static asset (e.g., .css, .js, .png)
+	IsAssets bool `json:"is_assets"`
+	// IsJS indicates if the request is for a JavaScript file
+	IsJS bool `json:"is_js"`
+	// IsHTTP2 indicates if the request was made using the HTTP/2 protocol
+	IsHTTP2 bool `json:"is_http2"`
+	// IsRobotsTxt indicates if the request is for the robots.txt file
+	IsRobotsTxt bool `json:"is_robots_txt"`
+	// IsXml indicates if the request is for an XML file
+	IsXml bool `json:"is_xml"`
+	// IsAttemptedLogin indicates if the request is an attempted login
+	// based on the presence of "login" in the path or user agent
 	IsAttemptedLogin bool `json:"is_attempted_login"`
-	IsWordpress      bool `json:"is_wordpress"`
-	IsEnv            bool `json:"is_env"`
-	IsExecutable     bool `json:"is_executable"`
-	IsPowerShell     bool `json:"is_powershell"`
-	IsNuxt           bool `json:"is_nuxt"`
-	IsGponRouter     bool `json:"is_gpon_router"`
+	// IsWordpress indicates if the request is related to a WordPress site
+	IsWordpress bool `json:"is_wordpress"`
+	// IsEnv indicates if the request is for an environment file
+	IsEnv bool `json:"is_env"`
+	// IsExecutable indicates if the request is for an executable file
+	IsExecutable bool `json:"is_executable"`
+	// IsPowerShell indicates if the request is for a PowerShell script
+	IsPowerShell bool `json:"is_powershell"`
+	// IsNuxt indicates if the request is related to a Nuxt.js application
+	IsNuxt bool `json:"is_nuxt"`
+	// IsGponRouter indicates if the request is related to a GPON router
+	IsGponRouter bool `json:"is_gpon_router"`
 }
 
 type LogLine struct {
@@ -55,22 +69,17 @@ type LogLine struct {
 	// the time part of the date time
 	RemoteTime string `json:"remote_time"`
 	// Whether the request was successful
-	IsSuccess bool     `json:"is_success"`
-	MetaData  MetaData `json:"meta_data"`
+	IsSuccess bool `json:"is_success"`
+	// MetaData contains various boolean fields that indicate specific
+	// characteristics of the path of the request which can be useful
+	// for further vulnerability analysis.
+	MetaData MetaData `json:"meta_data"`
 }
 
 // Checks the value of the status code and returns
 // if it was successful or not
-func AnalyzeStatusCode(status int) bool {
+func (l LogLine) analyzeStatusCode(status int) bool {
 	return status >= 200 && status <= 226
-}
-
-func AnalyzePath(logLine LogLine) string {
-	switch logLine.Path {
-	case "/":
-		return "home"
-	}
-	return "unknown"
 }
 
 // Parses a line of the log file and returns a LogLine struct
@@ -83,7 +92,7 @@ func (l LogLine) ParseLine() (LogLine, error) {
 	}
 
 	status, _ := strconv.Atoi(matched[7])
-	l.IsSuccess = AnalyzeStatusCode(status)
+	l.IsSuccess = l.analyzeStatusCode(status)
 
 	l.RemoteAddress = matched[1]
 	l.RemoteUser = matched[2]
