@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+	"time"
 
 	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/go-co-op/gocron"
@@ -58,8 +59,9 @@ func (l *Logs) ReadFile(path string, serverConfig *models.ServerConfig) ([]strin
 	return logs, nil
 }
 
-func (l *Logs) StartServer(ctx context.Context, serverConfig *models.ServerConfig, redisClient *redis.Client) {
+func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis.Client) {
 	l.isStarted.Store(true)
+	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.YamlConfig.LogServerConfig.Interval)
 
 	ch := make(chan error, 1)
 
@@ -76,14 +78,24 @@ func (l *Logs) StartServer(ctx context.Context, serverConfig *models.ServerConfi
 
 			fmt.Printf("📁 Found %d log files\n", len(logFiles))
 
-			for i, logFile := range logFiles {
-				extension := filepath.Ext(logFile)
-				if extension != ".log" {
-					logFiles = append(logFiles[:i], logFiles[i+1:]...)
-					log.Printf("⚠️ Skipping file %s with unsupported extension %s\n", logFile, extension)
-					continue
+			// for i, logFile := range logFiles {
+			// 	extension := filepath.Ext(logFile)
+			// 	if extension != ".log" {
+			// 		logFiles = append(logFiles[:i], logFiles[i+1:]...)
+			// 		log.Printf("⚠️ Skipping file %s with unsupported extension %s\n", logFile, extension)
+			// 		continue
+			// 	}
+			// }
+
+			filtered := logFiles[:0]
+			for _, logFile := range logFiles {
+				if filepath.Ext(logFile) == ".log" {
+					filtered = append(filtered, logFile)
+				} else {
+					log.Printf("⚠️ Skipping file %s\n", logFile)
 				}
 			}
+			logFiles = filtered
 
 			for _, filePath := range logFiles {
 				logs, err := l.ReadFile(filePath, serverConfig)
@@ -103,12 +115,19 @@ func (l *Logs) StartServer(ctx context.Context, serverConfig *models.ServerConfi
 				// }
 
 				logLines := make([]LogLine, 0, len(logs))
-				logsRedis.SaveLogs(logLines)
 
 				for _, value := range logs {
 					logLine := LogLine{RawLine: value}
 					result, err := logLine.ParseLine()
-					ch <- err
+
+					if err != nil {
+						select {
+						case ch <- err:
+						default:
+							log.Printf("🔴 Parse error (channel full): %s\n", err)
+						}
+					}
+
 					logLines = append(logLines, result)
 
 					// if err == nil {
@@ -117,6 +136,8 @@ func (l *Logs) StartServer(ctx context.Context, serverConfig *models.ServerConfi
 					// 	log.Printf("🔴 Could not parse line: %s\n", value)
 					// }
 				}
+
+				logsRedis.SaveLogs(logLines)
 			}
 
 			if l.debugMode {
@@ -125,16 +146,31 @@ func (l *Logs) StartServer(ctx context.Context, serverConfig *models.ServerConfi
 			}
 		})
 
-		ch <- err
+		if err != nil {
+			ch <- fmt.Errorf("🔴 Could not schedule log server: %w", err)
+		}
+
+		l.scheduler.StartAsync()
 	}()
 
-	select {
-	case err := <-ch:
-		log.Printf("🔴 Log server error: %s\n", err)
-	case <-ctx.Done():
-		l.StopServer()
-		log.Print("🟢 Log server stopped")
+	for {
+		select {
+		case err := <-ch:
+			log.Printf("🔴 Log server error: %s\n", err)
+			return
+		case <-l.ctx.Done():
+			l.StopServer()
+			return
+		}
 	}
+
+	// select {
+	// case err := <-ch:
+	// 	log.Printf("🔴 Log server error: %s\n", err)
+	// case <-l.ctx.Done():
+	// 	l.StopServer()
+	// 	log.Print("🟢 Log server stopped")
+	// }
 }
 
 func (l *Logs) StopServer() bool {
@@ -145,4 +181,13 @@ func (l *Logs) StopServer() bool {
 		return true
 	}
 	return false
+}
+
+func NewLogsService(ctx context.Context, rootDir string, debugMode bool) *Logs {
+	return &Logs{
+		ctx:       ctx,
+		rootDir:   rootDir,
+		scheduler: gocron.NewScheduler(time.UTC),
+		debugMode: debugMode,
+	}
 }

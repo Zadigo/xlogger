@@ -29,10 +29,6 @@ func (a *App) Start(ctx context.Context) error {
 		return fmt.Errorf("🔴 Failed to load Redis: %w", err)
 	}
 
-	// Log server
-	logServer := &logic.Logs{}
-	logServer.StartServer(ctx, a.config, a.redisClient)
-
 	defer func() {
 		a.redisClient.Close()
 		log.Print("🔴 Redis client closed")
@@ -50,6 +46,10 @@ func (a *App) Start(ctx context.Context) error {
 		log.Print("🟢 Server is listening on port 8080")
 		ch <- server.ListenAndServe()
 	}()
+
+	// Log server
+	logServer := logic.NewLogsService(a.ctx, a.config.RootDir, false)
+	logServer.StartServer(a.config, a.redisClient)
 
 	select {
 	case err := <-ch:

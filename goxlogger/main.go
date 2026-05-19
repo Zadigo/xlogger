@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 
 func main() {
 	godotenv.Load(".env")
+	log.Print("⚡️ Starting Go-xLogger...")
 
 	rootDir, err := filepath.Abs(".")
 	if err != nil {

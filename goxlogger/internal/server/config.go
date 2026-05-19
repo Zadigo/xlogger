@@ -7,7 +7,7 @@ func LoadConfig(rootDir string) *models.ServerConfig {
 		RootDir: rootDir,
 		YamlConfig: models.YamlConfig{
 			LogServerConfig: models.LogServerConfig{
-				Interval:     "0 0 * * *",
+				Interval:     "* * * * * ",
 				LocationName: "data",
 			},
 		},
