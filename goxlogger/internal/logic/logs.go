@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
-	"github.com/Zadigo/xlogger_backend/internal/models"
+	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/go-co-op/gocron"
 	"github.com/redis/go-redis/v9"
 )

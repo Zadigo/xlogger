@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"path/filepath"
 
-	"github.com/Zadigo/xlogger_backend/internal/server"
+	"github.com/Zadigo/goxlogger/internal/server"
 	"github.com/joho/godotenv"
 )
 

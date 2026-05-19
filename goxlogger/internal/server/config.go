@@ -1,6 +1,6 @@
 package server
 
-import "github.com/Zadigo/xlogger_backend/internal/models"
+import "github.com/Zadigo/goxlogger/internal/models"
 
 func LoadConfig(rootDir string) *models.ServerConfig {
 	return &models.ServerConfig{

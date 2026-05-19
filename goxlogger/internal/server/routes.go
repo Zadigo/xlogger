@@ -3,7 +3,7 @@ package server
 import (
 	"time"
 
-	"github.com/Zadigo/xlogger_backend/internal/handlers"
+	"github.com/Zadigo/goxlogger/internal/handlers"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 )

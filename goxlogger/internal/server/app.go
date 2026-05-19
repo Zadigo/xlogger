@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Zadigo/xlogger_backend/internal/logic"
-	"github.com/Zadigo/xlogger_backend/internal/models"
+	"github.com/Zadigo/goxlogger/internal/logic"
+	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 )
