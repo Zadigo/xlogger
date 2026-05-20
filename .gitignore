@@ -33,6 +33,6 @@ go.work.sum
 
 # Other
 *.log
-*.yaml
+config.yaml
 *.json
 *.sqlite
