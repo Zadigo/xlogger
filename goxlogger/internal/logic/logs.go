@@ -61,12 +61,12 @@ func (l *Logs) ReadFile(path string, serverConfig *models.ServerConfig) ([]strin
 
 func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis.Client) {
 	l.isStarted.Store(true)
-	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.YamlConfig.LogServerConfig.Interval)
+	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.YamlConfig.LogServer.Interval)
 
 	ch := make(chan error, 1)
 
 	go func() {
-		_, err := l.scheduler.Cron(serverConfig.YamlConfig.LogServerConfig.Interval).Do(func() {
+		_, err := l.scheduler.Cron(serverConfig.YamlConfig.LogServer.Interval).Do(func() {
 			logsRedis := LogRedis{ctx: l.ctx, redisClient: redisClient}
 
 			// Get all the log files in the folder

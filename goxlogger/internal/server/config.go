@@ -1,14 +1,25 @@
 package server
 
-import "github.com/Zadigo/goxlogger/internal/models"
+import (
+	"github.com/Zadigo/goxlogger/internal/models"
+)
 
 func LoadConfig(rootDir string) *models.ServerConfig {
 	return &models.ServerConfig{
 		RootDir: rootDir,
 		YamlConfig: models.YamlConfig{
-			LogServerConfig: models.LogServerConfig{
-				Interval:     "* * * * * ",
-				LocationName: "data",
+			LogServer: models.LogServerConfig{
+				Interval: "* * * * * ",
+				Logs: struct {
+					Folder string `yaml:"folder"`
+				}{
+					Folder: "data",
+				},
+			},
+			Redis: struct {
+				Addr string `yaml:"addr"`
+			}{
+				Addr: "localhost:6379",
 			},
 		},
 	}
