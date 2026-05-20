@@ -1,12 +1,9 @@
 package logic
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 	"time"
 
@@ -23,41 +20,41 @@ type Logs struct {
 	debugMode bool
 }
 
-func (l *Logs) GetLogs() ([]string, error) {
-	var files []string
-	fullpath, err := filepath.Abs(l.rootDir)
-	if err != nil {
-		return nil, err
-	}
+// func (l *Logs) GetLogs() ([]string, error) {
+// 	var files []string
+// 	fullpath, err := filepath.Abs(l.rootDir)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			files = append(files, path)
-		}
-		return nil
-	})
-	return files, err
-}
+// 	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
+// 		if !info.IsDir() {
+// 			files = append(files, path)
+// 		}
+// 		return nil
+// 	})
+// 	return files, err
+// }
 
-func (l *Logs) ReadFile(path string, serverConfig *models.ServerConfig) ([]string, error) {
-	file, err := os.Open(path)
+// func (l *Logs) ReadFile(path string, serverConfig *models.ServerConfig) ([]string, error) {
+// 	file, err := os.Open(path)
 
-	var logs []string = make([]string, 0)
-	if err != nil {
-		log.Fatal("❌ Could not open file")
-		return logs, err
-	}
+// 	var logs []string = make([]string, 0)
+// 	if err != nil {
+// 		log.Fatal("❌ Could not open file")
+// 		return logs, err
+// 	}
 
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
+// 	defer file.Close()
+// 	scanner := bufio.NewScanner(file)
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		logs = append(logs, line)
-	}
+// 	for scanner.Scan() {
+// 		line := scanner.Text()
+// 		logs = append(logs, line)
+// 	}
 
-	return logs, nil
-}
+// 	return logs, nil
+// }
 
 func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis.Client) {
 	l.isStarted.Store(true)
@@ -67,52 +64,28 @@ func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis
 
 	go func() {
 		_, err := l.scheduler.Cron(serverConfig.YamlConfig.LogServer.Interval).Do(func() {
-			logsRedis := LogRedis{ctx: l.ctx, redisClient: redisClient}
+			fileRedis := FileRedis{
+				ctx:         l.ctx,
+				rootDir:     serverConfig.RootDir,
+				redisClient: redisClient,
+				Files:       []File{},
+			}
 
 			// Get all the log files in the folder
 			// path, err := filepath.Abs(serverConfig.Config.LogsFolder.Name)
-			logFiles, err := l.GetLogs()
+			logFiles, err := fileRedis.GetLocalLogs()
 			if err != nil {
 				ch <- fmt.Errorf("🔴 Could not get log files: %w", err)
 			}
 
 			fmt.Printf("📁 Found %d log files\n", len(logFiles))
 
-			// for i, logFile := range logFiles {
-			// 	extension := filepath.Ext(logFile)
-			// 	if extension != ".log" {
-			// 		logFiles = append(logFiles[:i], logFiles[i+1:]...)
-			// 		log.Printf("⚠️ Skipping file %s with unsupported extension %s\n", logFile, extension)
-			// 		continue
-			// 	}
-			// }
-
-			filtered := logFiles[:0]
 			for _, logFile := range logFiles {
-				if filepath.Ext(logFile) == ".log" {
-					filtered = append(filtered, logFile)
-				} else {
-					log.Printf("⚠️ Skipping file %s\n", logFile)
-				}
-			}
-			logFiles = filtered
-
-			for _, filePath := range logFiles {
-				logs, err := l.ReadFile(filePath, serverConfig)
+				logs, err := fileRedis.ReadFile(logFile.Path, serverConfig)
 				if err != nil {
-					log.Printf("🔴 Could not read file %s: %s\n", filePath, err)
+					log.Printf("🔴 Could not read file %s: %s\n", logFile.Path, err)
 					continue
 				}
-
-				// Cache the log files in Redis as sets
-				// cmd := redisClient.SAdd(context.Background(), fmt.Sprintf("logs:%s", filepath.Base(filePath)), RedisCachedLogs{
-				// 	logs: logs,
-				// })
-
-				// if cmd.Err() != nil {
-				// 	log.Printf("🔴 Could not cache logs for file %s: %s\n", filePath, cmd.Err())
-				// 	continue
-				// }
 
 				logLines := make([]LogLine, 0, len(logs))
 
@@ -129,14 +102,9 @@ func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis
 					}
 
 					logLines = append(logLines, result)
-
-					// if err == nil {
-					// 	log.Printf("🟢 %s %s %s %d %t\n", result.RemoteAddress, result.Method, result.Path, result.StatusCode, result.IsSuccess)
-					// } else {
-					// 	log.Printf("🔴 Could not parse line: %s\n", value)
-					// }
 				}
 
+				logsRedis := LogRedis{ctx: l.ctx, redisClient: redisClient}
 				logsRedis.SaveLogs(logLines)
 			}
 
