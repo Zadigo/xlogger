@@ -16,11 +16,6 @@ func LoadConfig(rootDir string) *models.ServerConfig {
 					Folder: "data",
 				},
 			},
-			Redis: struct {
-				Addr string `yaml:"addr"`
-			}{
-				Addr: "localhost:6379",
-			},
 		},
 	}
 }

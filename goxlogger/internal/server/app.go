@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Zadigo/goxlogger/internal/logic"
@@ -61,12 +62,20 @@ func (a *App) Start() error {
 }
 
 func NewApp(ctx context.Context, config *models.ServerConfig) *App {
+	redisAddr := os.Getenv("REDIS_ADDR")
+
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+
 	app := &App{
 		ctx:    ctx,
 		config: config,
 		redisClient: redis.NewClient(&redis.Options{
-			Addr: "localhost:6379",
-			DB:   0,
+			Addr:     redisAddr,
+			Username: "",
+			Password: "",
+			DB:       0,
 		}),
 	}
 	app.loadRoutes()

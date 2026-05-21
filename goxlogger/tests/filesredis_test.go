@@ -43,7 +43,7 @@ func TestTestFilesRedis(t *testing.T) {
 	})
 
 	t.Run("Should cache content", func(t *testing.T) {
-		err := filesRedis.CacheContent(logic.File{Name: "example1.log", Path: "../data/example1.log"})
+		err := filesRedis.CacheContent("example1.log", []string{"line1", "line2"})
 		assert.Nil(t, err)
 	})
 }

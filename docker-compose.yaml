@@ -1,11 +1,32 @@
 services:
   xlogger:
     build: ./goxlogger
+    container_name: xlogger-app
     environment:
-      - DEBUG=true
-      - PORT=8080
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
     volumes:
-      - ./goxlogger:/app
-    command: go run main.go
+      - ./config.yaml:/app/config.yaml
+    networks:
+      - xlogger
+
+  redis:
+    image: redis:latest
+    container_name: xlogger-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      - xlogger
+
+networks:
+  xlogger:
+    driver: bridge
