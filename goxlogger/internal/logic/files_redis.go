@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/redis/go-redis/v9"
@@ -44,6 +45,8 @@ func (f *FileRedis) DeleteFile() error {
 	return nil
 }
 
+// SaveFiles saves the list of log files in Redis using a
+// hash with the file name as the key and the file path as the value
 func (f *FileRedis) SaveFiles() error {
 	files, err := f.GetLocalLogs()
 
@@ -84,6 +87,7 @@ func (f *FileRedis) GetLocalLogs() ([]File, error) {
 	return files, err
 }
 
+// ReadFile reads the content of a log file and returns it as a slice of strings
 func (f *FileRedis) ReadFile(path string, serverConfig *models.ServerConfig) ([]string, error) {
 	file, err := os.Open(path)
 
@@ -111,17 +115,21 @@ func (f *FileRedis) CacheContent(file File) error {
 		return err
 	}
 
-	values := make([]interface{}, len(logs))
+	values := make([]any, len(logs))
 	for i, l := range logs {
 		values[i] = l
 	}
 
 	name := fmt.Sprintf("go-xlogger:%s", file.Name)
-	cmd := f.redisClient.RPush(f.ctx, name, values...)
-	if err := cmd.Err(); err != nil {
+	err = f.redisClient.RPush(f.ctx, name, values...).Err()
+	if err != nil {
 		return err
 	}
 
+	err = f.redisClient.Expire(f.ctx, name, 15*time.Minute).Err()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

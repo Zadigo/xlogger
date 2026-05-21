@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "goxlogger/proto;proto";
+
+service LogsService {
+  rpc GetLogs(GetLogsRequest) returns (GetLogsResponse);
+}
+
+message Log {
+  string name = 1;
+  string path = 2;
+}
+
+message GetLogsRequest {
+  string file_name = 1;
+}
+
+message GetLogsResponse {
+  repeated Log logs = 1;
+}

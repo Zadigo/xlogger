@@ -20,42 +20,6 @@ type Logs struct {
 	debugMode bool
 }
 
-// func (l *Logs) GetLogs() ([]string, error) {
-// 	var files []string
-// 	fullpath, err := filepath.Abs(l.rootDir)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
-// 		if !info.IsDir() {
-// 			files = append(files, path)
-// 		}
-// 		return nil
-// 	})
-// 	return files, err
-// }
-
-// func (l *Logs) ReadFile(path string, serverConfig *models.ServerConfig) ([]string, error) {
-// 	file, err := os.Open(path)
-
-// 	var logs []string = make([]string, 0)
-// 	if err != nil {
-// 		log.Fatal("❌ Could not open file")
-// 		return logs, err
-// 	}
-
-// 	defer file.Close()
-// 	scanner := bufio.NewScanner(file)
-
-// 	for scanner.Scan() {
-// 		line := scanner.Text()
-// 		logs = append(logs, line)
-// 	}
-
-// 	return logs, nil
-// }
-
 func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis.Client) {
 	l.isStarted.Store(true)
 	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.YamlConfig.LogServer.Interval)
@@ -64,12 +28,7 @@ func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis
 
 	go func() {
 		_, err := l.scheduler.Cron(serverConfig.YamlConfig.LogServer.Interval).Do(func() {
-			fileRedis := FileRedis{
-				ctx:         l.ctx,
-				rootDir:     serverConfig.RootDir,
-				redisClient: redisClient,
-				Files:       []File{},
-			}
+			fileRedis := NewFileRedis(l.ctx, l.rootDir, redisClient)
 
 			// Get all the log files in the folder
 			// path, err := filepath.Abs(serverConfig.Config.LogsFolder.Name)
