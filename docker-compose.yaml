@@ -3,12 +3,13 @@ services:
     build: ./goxlogger
     container_name: xlogger-app
     environment:
+      - XLOGGER_PORT=9000
       - REDIS_ADDR=redis:6379
     depends_on:
       redis:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "9000:9000"
     volumes:
       - ./config.yaml:/app/config.yaml
     networks:

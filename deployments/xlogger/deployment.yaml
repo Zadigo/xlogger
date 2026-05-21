@@ -43,6 +43,18 @@ spec:
         ports:
           - containerPort: 6379
 
+      - name: db
+        image: db:latest
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+          - containerPort: 5432
+
       # volumes:
       # - name: xlogger-vol
       #   configMap:
@@ -50,3 +62,4 @@ spec:
       #     items:
       #       - key: logs
       #         path: logs.conf
+

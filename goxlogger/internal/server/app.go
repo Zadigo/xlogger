@@ -33,16 +33,21 @@ func (a *App) Start() error {
 		log.Print("🔴 Redis client closed")
 	}()
 
+	port := os.Getenv("XLOGGER_PORT")
+	if port == "" {
+		port = "9000"
+	}
+
 	// HTTP server
 	server := http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: a.router,
 	}
 
 	ch := make(chan error, 1)
 
 	go func() {
-		log.Print("🟢 Server is listening on port 8080")
+		log.Printf("🟢 Server is listening on port %s", port)
 		ch <- server.ListenAndServe()
 	}()
 
