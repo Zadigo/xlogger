@@ -26,6 +26,10 @@ spec:
             cpu: "500m"
         ports:
         - containerPort: 9000
+        # volumeMounts:
+        # - name: xlogger-vol
+        #   mountPath: /etc/xlogger/logs.conf
+        #   subPath: logs.conf
 
       - name: redis
         image: redis:latest
@@ -38,3 +42,11 @@ spec:
             cpu: "500m"
         ports:
           - containerPort: 6379
+
+      # volumes:
+      # - name: xlogger-vol
+      #   configMap:
+      #     name: logs-vol
+      #     items:
+      #       - key: logs
+      #         path: logs.conf
