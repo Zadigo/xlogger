@@ -15,7 +15,7 @@ func TestTestFilesRedis(t *testing.T) {
 	filesRedis := logic.NewFileRedis(t.Context(), "../data", redisClient)
 
 	t.Run("Should load files", func(t *testing.T) {
-		files, err := filesRedis.GetLocalLogs()
+		files, err := filesRedis.GetLocalLogs("/data")
 		assert.Nil(t, err)
 		assert.NotEmpty(t, files)
 		fmt.Print(files)
@@ -28,7 +28,7 @@ func TestTestFilesRedis(t *testing.T) {
 	})
 
 	t.Run("Should save files", func(t *testing.T) {
-		err := filesRedis.SaveFiles()
+		err := filesRedis.SaveFiles("/data")
 		assert.Nil(t, err)
 	})
 

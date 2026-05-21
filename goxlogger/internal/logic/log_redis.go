@@ -22,12 +22,12 @@ func (l *LogRedis) SaveLogs(logLines []LogLine) error {
 	if err != nil {
 		return err
 	}
-	cmd := l.redisClient.SAdd(l.ctx, "all_logs", data)
+	cmd := l.redisClient.SAdd(l.ctx, "go-xlogger:all_logs", data)
 	return cmd.Err()
 }
 
 func (l *LogRedis) GetLogs() ([]LogLine, error) {
-	cmd := l.redisClient.SMembers(l.ctx, "all_logs")
+	cmd := l.redisClient.SMembers(l.ctx, "go-xlogger:all_logs")
 	if cmd.Err() != nil {
 		return nil, cmd.Err()
 	}

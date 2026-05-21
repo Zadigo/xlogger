@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Zadigo/goxlogger/internal/models"
@@ -47,8 +48,8 @@ func (f *FileRedis) DeleteFile() error {
 
 // SaveFiles saves the list of log files in Redis using a
 // hash with the file name as the key and the file path as the value
-func (f *FileRedis) SaveFiles() error {
-	files, err := f.GetLocalLogs()
+func (f *FileRedis) SaveFiles(path string) error {
+	files, err := f.GetLocalLogs(path)
 
 	if err != nil {
 		return err
@@ -65,9 +66,15 @@ func (f *FileRedis) SaveFiles() error {
 
 // GetLocalLogs retrieves all the log files in the root directory
 // and returns them as a slice of File structs
-func (f *FileRedis) GetLocalLogs() ([]File, error) {
+func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {
 	var files []File
-	fullpath, err := filepath.Abs(f.rootDir)
+	_path := strings.TrimSuffix(path, "/")
+	
+	if _path == "" {
+		_path = "data"
+	}
+
+	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", _path))
 	if err != nil {
 		return nil, err
 	}

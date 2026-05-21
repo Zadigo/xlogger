@@ -32,12 +32,12 @@ func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis
 
 			// Get all the log files in the folder
 			// path, err := filepath.Abs(serverConfig.Config.LogsFolder.Name)
-			logFiles, err := fileRedis.GetLocalLogs()
+			logFiles, err := fileRedis.GetLocalLogs(serverConfig.YamlConfig.LogServer.Logs.Folder)
 			if err != nil {
 				ch <- fmt.Errorf("🔴 Could not get log files: %w", err)
 			}
 
-			fmt.Printf("📁 Found %d log files\n", len(logFiles))
+			log.Printf("📁 Found %d log files\n", len(logFiles))
 
 			for _, logFile := range logFiles {
 				logs, err := fileRedis.ReadFile(logFile.Path, serverConfig)
@@ -116,5 +116,6 @@ func NewLogsService(ctx context.Context, rootDir string, debugMode bool) *Logs {
 		rootDir:   rootDir,
 		scheduler: gocron.NewScheduler(time.UTC),
 		debugMode: debugMode,
+		isStarted: atomic.Bool{},
 	}
 }
