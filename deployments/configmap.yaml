@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: goxlogger-config
+  name: xlogger-config
   labels:
-    app: goxlogger-config
+    app: xlogger-config
 data:
-  debug: "true"
+  redis_addr: redis:6379
 

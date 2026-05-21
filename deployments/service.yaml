@@ -1,12 +1,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: goxlogger-service
+  name: xlogger-service
 spec:
   selector:
-    app:  goxlogger-service
+    app:  xlogger-depl
   type: ClusterIP
   ports:
-  - name: goxlogger-service-port
+  - name: go-xlogger
     port:  80
-    targetPort:  goxlogger-port
+    targetPort: 9000

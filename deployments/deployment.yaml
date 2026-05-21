@@ -1,41 +1,40 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: goxlogger-depl
+  name: xlogger-depl
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: xlogger-depl
   template:
     metadata:
       labels:
-        editor: vscode
+        app: xlogger-depl
     spec:
       containers:
-      - name: goxlogger
-        image: goxlogger:latest
+
+      - name: xlogger
+        image: xlogger-xlogger:latest
         imagePullPolicy: IfNotPresent
-        envFrom:
-        - name: DEBUG
-          valueFrom:
-            configMapRef:
-              name:  debug
-              key: goxlogger-config
-        volumeMounts:
-        - name: config-vol
-          mountPath: /etc/config
         resources:
-          requests:
-            memory: "128Mi"
-            cpu: "500m"
           limits:
             memory: "128Mi"
             cpu: "500m"
-        containerPort:
-        - name: goxlogger-port
-          port: "9000"
-      volumes:
-      - name: log-config
-        configMap:
-          name: log-config
-          items:
-            - key: log_level
-              path: log_level.conf       
+          requests:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 9000
+
+      - name: redis
+        image: redis:latest
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+          - containerPort: 6379
