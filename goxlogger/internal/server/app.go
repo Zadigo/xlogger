@@ -20,9 +20,7 @@ type App struct {
 	router      *chi.Mux
 }
 
-func (a *App) Start(ctx context.Context) error {
-	a.ctx = ctx
-
+func (a *App) Start() error {
 	// Redis client
 	err := a.redisClient.Ping(a.ctx).Err()
 	if err != nil {
@@ -55,15 +53,16 @@ func (a *App) Start(ctx context.Context) error {
 	case err := <-ch:
 		return err
 
-	case <-ctx.Done():
+	case <-a.ctx.Done():
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		return server.Shutdown(timeoutCtx)
 	}
 }
 
-func NewApp(config *models.ServerConfig) *App {
+func NewApp(ctx context.Context, config *models.ServerConfig) *App {
 	app := &App{
+		ctx:    ctx,
 		config: config,
 		redisClient: redis.NewClient(&redis.Options{
 			Addr: "localhost:6379",

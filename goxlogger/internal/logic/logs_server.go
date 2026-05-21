@@ -25,17 +25,19 @@ func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis
 	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.YamlConfig.LogServer.Interval)
 
 	ch := make(chan error, 1)
+	fileRedis := NewFileRedis(l.ctx, l.rootDir, redisClient)
 
 	go func() {
 		_, err := l.scheduler.Cron(serverConfig.YamlConfig.LogServer.Interval).Do(func() {
-			fileRedis := NewFileRedis(l.ctx, l.rootDir, redisClient)
-
 			// Get all the log files in the folder
 			// path, err := filepath.Abs(serverConfig.Config.LogsFolder.Name)
 			logFiles, err := fileRedis.GetLocalLogs(serverConfig.YamlConfig.LogServer.Logs.Folder)
+
 			if err != nil {
 				ch <- fmt.Errorf("🔴 Could not get log files: %w", err)
 			}
+
+			fileRedis.SaveFiles(logFiles)
 
 			log.Printf("📁 Found %d log files\n", len(logFiles))
 
@@ -43,6 +45,11 @@ func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis
 				logs, err := fileRedis.ReadFile(logFile.Path, serverConfig)
 				if err != nil {
 					log.Printf("🔴 Could not read file %s: %s\n", logFile.Path, err)
+					continue
+				}
+
+				if err = fileRedis.CacheContent(logFile.Name, logs); err != nil {
+					log.Printf("🔴 Could not cache content for file %s: %s\n", logFile.Name, err)
 					continue
 				}
 
@@ -63,7 +70,7 @@ func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis
 					logLines = append(logLines, result)
 				}
 
-				logsRedis := LogRedis{ctx: l.ctx, redisClient: redisClient}
+				logsRedis := NewLogsRedis(l.ctx, redisClient)
 				logsRedis.SaveLogs(logLines)
 			}
 

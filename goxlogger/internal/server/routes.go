@@ -26,7 +26,7 @@ func (a *App) loadRoutes() {
 }
 
 func (a *App) loadBaseRoutes(r chi.Router) {
-	handlers := &handlers.BaseRouteHandlers{}
+	handlers := handlers.NewBaseRouteHandlers(a.ctx, a.config.RootDir, a.redisClient, a.config)
 	r.Get("/", handlers.GetLogs)
 	r.Get("/ws/live", handlers.LiveWsHandler)
 }

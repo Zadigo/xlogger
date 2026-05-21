@@ -20,10 +20,12 @@ func main() {
 		panic(err)
 	}
 
-	app := server.NewApp(server.LoadConfig(rootDir))
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	err = app.Start(ctx)
+
+	app := server.NewApp(ctx, server.LoadConfig(rootDir))
+	err = app.Start()
+
 	if err != nil {
 		panic(err)
 	}

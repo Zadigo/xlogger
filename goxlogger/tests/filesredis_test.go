@@ -28,7 +28,8 @@ func TestTestFilesRedis(t *testing.T) {
 	})
 
 	t.Run("Should save files", func(t *testing.T) {
-		err := filesRedis.SaveFiles("/data")
+		files, _ := filesRedis.GetLocalLogs("/data")
+		err := filesRedis.SaveFiles(files)
 		assert.Nil(t, err)
 	})
 

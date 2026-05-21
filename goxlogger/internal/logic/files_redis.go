@@ -34,6 +34,7 @@ func (f *FileRedis) FileFromString(path string) File {
 	return file
 }
 
+// GetFile retrieves a file from Redis by its name and returns it as a File struct
 func (f *FileRedis) GetFile(name string) (File, error) {
 	cmd := f.redisClient.HGet(f.ctx, f.Key, name)
 	if cmd.Err() != nil {
@@ -42,19 +43,34 @@ func (f *FileRedis) GetFile(name string) (File, error) {
 	return File{Name: name, Path: cmd.Val()}, nil
 }
 
+// GetLogs retrieves the cached logs for a specific file from Redis
+// and returns them as a slice of LogLine structs
+func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
+	cmd := f.redisClient.LRange(f.ctx, fmt.Sprintf("go-xlogger:%s", name), 0, -1)
+	if cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+
+	var logs []LogLine
+	for _, log := range cmd.Val() {
+		line := LogLine{RawLine: log}
+		_, err := line.ParseLine()
+		if err != nil {
+			continue
+		}
+		logs = append(logs, line)
+	}
+
+	return logs, nil
+}
+
 func (f *FileRedis) DeleteFile() error {
 	return nil
 }
 
 // SaveFiles saves the list of log files in Redis using a
 // hash with the file name as the key and the file path as the value
-func (f *FileRedis) SaveFiles(path string) error {
-	files, err := f.GetLocalLogs(path)
-
-	if err != nil {
-		return err
-	}
-
+func (f *FileRedis) SaveFiles(files []File) error {
 	for _, file := range files {
 		cmd := f.redisClient.HSet(f.ctx, f.Key, file.Name, file.Path)
 		if err := cmd.Err(); err != nil {
@@ -69,7 +85,7 @@ func (f *FileRedis) SaveFiles(path string) error {
 func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {
 	var files []File
 	_path := strings.TrimSuffix(path, "/")
-	
+
 	if _path == "" {
 		_path = "data"
 	}
@@ -116,19 +132,14 @@ func (f *FileRedis) ReadFile(path string, serverConfig *models.ServerConfig) ([]
 }
 
 // CacheContent reads the content of a log file and caches it in Redis
-func (f *FileRedis) CacheContent(file File) error {
-	logs, err := f.ReadFile(file.Path, nil)
-	if err != nil {
-		return err
-	}
-
-	values := make([]any, len(logs))
-	for i, l := range logs {
+func (f *FileRedis) CacheContent(fileName string, content []string) error {
+	values := make([]any, len(content))
+	for i, l := range content {
 		values[i] = l
 	}
 
-	name := fmt.Sprintf("go-xlogger:%s", file.Name)
-	err = f.redisClient.RPush(f.ctx, name, values...).Err()
+	name := fmt.Sprintf("go-xlogger:%s", fileName)
+	err := f.redisClient.RPush(f.ctx, name, values...).Err()
 	if err != nil {
 		return err
 	}

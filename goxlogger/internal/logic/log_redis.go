@@ -15,36 +15,41 @@ type LogRedis struct {
 	redisClient *redis.Client
 	broadcastCh chan LogLine
 	mu          sync.Mutex
+	Key         string
 }
 
 func (l *LogRedis) SaveLogs(logLines []LogLine) error {
-	data, err := json.Marshal(logLines)
-	if err != nil {
-		return err
+	var values []any
+	for _, logLine := range logLines {
+		data, err := json.Marshal(logLine)
+		if err != nil {
+			return err
+		}
+		values = append(values, data)
 	}
-	cmd := l.redisClient.SAdd(l.ctx, "go-xlogger:all_logs", data)
+	cmd := l.redisClient.SAdd(l.ctx, l.Key, values...)
 	return cmd.Err()
 }
 
 func (l *LogRedis) GetLogs() ([]LogLine, error) {
-	cmd := l.redisClient.SMembers(l.ctx, "go-xlogger:all_logs")
+	cmd := l.redisClient.SMembers(l.ctx, l.Key)
 	if cmd.Err() != nil {
 		return nil, cmd.Err()
 	}
 
 	var logLines []LogLine
 	for _, data := range cmd.Val() {
-		var logs []LogLine
-		if err := json.Unmarshal([]byte(data), &logs); err != nil {
+		var logLine LogLine
+		if err := json.Unmarshal([]byte(data), &logLine); err != nil {
 			return nil, err
 		}
-		logLines = append(logLines, logs...)
+		logLines = append(logLines, logLine)
 	}
 	return logLines, nil
 }
 
 func (l *LogRedis) DeleteLogs() error {
-	cmd := l.redisClient.Del(l.ctx, "all_logs")
+	cmd := l.redisClient.Del(l.ctx, l.Key)
 	return cmd.Err()
 }
 
@@ -95,5 +100,6 @@ func NewLogsRedis(ctx context.Context, redisClient *redis.Client) *LogRedis {
 		ctx:         ctx,
 		redisClient: redisClient,
 		broadcastCh: make(chan LogLine, 100),
+		Key:         "go-xlogger:all_logs",
 	}
 }
