@@ -18,7 +18,7 @@ services:
   redis:
     image: redis:latest
     container_name: xlogger-redis
-    healthcheck:
+    healthcheck:  
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
@@ -28,6 +28,22 @@ services:
     networks:
       - xlogger
 
+  db:
+    build: ./docker/db
+    container_name: xlogger-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=/run/secrets/postgres-secret
+      - POSTGRES_DB=xlogger
+    ports:
+      - "5432:5432"
+    networks:
+      - xlogger
+
 networks:
   xlogger:
     driver: bridge
+
+secrets:
+  postgres-secret:
+    file: ./docker/secrets/postgres_secret.txt
