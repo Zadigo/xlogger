@@ -80,3 +80,23 @@ func TestParseLine(t *testing.T) {
 		})
 	}
 }
+
+func TestAndroidAnalyzer(t *testing.T) {
+	testLines := []string{
+		"Mozilla/5.0 (Linux; Android 4.4.3; KFTHWI Build/KTU84M) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/34.0.0.0 Safari/537.36",
+		"Mozilla/5.0 (Linux; Android 5.1.1; Nexus 7 Build/LMY48I) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.84 Safari/537.36",
+	}
+
+	for _, line := range testLines {
+		t.Run(fmt.Sprintf("Testing line: %s", line), func(t *testing.T) {
+			agent := &logic.UserAgent{RawValue: line}
+
+			analyzer := &logic.AndroidAnalyzer{}
+			analyzer.Execute(agent)
+
+			assert.Equal(t, "Linux;", agent.OperatingSystemPlatform, fmt.Sprintf("Expected platform 'Linux;', got '%s'", agent.OperatingSystemPlatform))
+			assert.Equal(t, "Android", agent.OperatingSystemKernel, fmt.Sprintf("Expected OS 'Android', got '%s'", agent.OperatingSystemKernel))
+			assert.NotEmpty(t, agent.OperatingSystemBuildVersion, "Expected OS version to be non-empty")
+		})
+	}
+}
