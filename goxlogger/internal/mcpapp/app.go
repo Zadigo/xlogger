@@ -1,24 +1,42 @@
-package mcp
+package mcpapp
 
-// type McpApp struct {
-// 	ctx    context.Context
-// 	server *mcp.Server
-// }
+import (
+	"context"
+	"log"
 
-// func (a *McpApp) Start() {
-// 	// Create an HTTP transport
-// 	httpTransport := http.NewHTTPTransport("/mcp")
-// 	httpTransport.WithAddr(":8080")
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+)
 
-// 	go func() {
-// 		if err := a.server.Run(a.ctx, httpTransport); err != nil {
-// 			log.Fatal(err)
-// 		}
-// 	}()
-// }
+type McpApp struct {
+	ctx    context.Context
+	server *mcp.Server
+}
 
-// func NewMcpApp(ctx context.Context) *McpApp {
-// 	app := &McpApp{ctx: ctx}
-// 	app.loadRoutes()
-// 	return app
-// }
+func (a *McpApp) Start() {
+	// Use the official SDK's native HTTP transport struct directly
+	httpTransport := &mcp.StreamableServerTransport{}
+
+	go func() {
+		if err := a.server.Run(a.ctx, httpTransport); err != nil {
+			log.Fatal(err)
+		}
+	}()
+}
+
+func NewMcpApp(ctx context.Context) *McpApp {
+	server := mcp.NewServer(
+		&mcp.Implementation{
+			Name:    "my-mcp-server",
+			Version: "1.0.0",
+		},
+		nil,
+	)
+
+	app := &McpApp{
+		ctx:    ctx,
+		server: server,
+	}
+
+	app.loadTools()
+	return app
+}
