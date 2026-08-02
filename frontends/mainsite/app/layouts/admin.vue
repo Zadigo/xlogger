@@ -10,7 +10,7 @@
 
     <div class="flex-1 flex flex-col overflow-hidden lg:peer-data-[variant=floating]:my-4 peer-data-[variant=inset]:m-4 lg:peer-data-[variant=inset]:not-peer-data-[collapsible=offcanvas]:ms-0 peer-data-[variant=inset]:rounded-xl peer-data-[variant=inset]:shadow-sm peer-data-[variant=inset]:ring peer-data-[variant=inset]:ring-default bg-default">
       <div class="h-(--ui-header-height) shrink-0 flex items-center px-4" :class="[variant !== 'floating' && 'border-b border-default', side === 'right' && 'justify-end']">
-        <u-button :icon="side === 'left' ? 'i-lucide-panel-left' : 'i-lucide-panel-right'" color="neutral" variant="ghost" aria-label="Toggle sidebar" @click="open = !open" />
+        <u-button :icon="side === 'left' ? 'i-lucide-panel-left' : 'i-lucide-panel-right'" color="neutral" variant="ghost" aria-label="Toggle sidebar" @click="() => { toggleOpen() }" />
       </div>
 
       <main class="flex-1 p-4">
@@ -23,14 +23,15 @@
 <script setup lang="ts">
 import type { NavigationMenuItem, SidebarProps } from '@nuxt/ui'
 
-// Ignore the props for the example
 defineProps<Pick<SidebarProps, 'variant' | 'collapsible' | 'side'>>()
 
-const open = ref(true)
+const open = ref<boolean>(true)
+const toggleOpen = useToggle(open)
 
 const items: NavigationMenuItem[] = [
   {
     label: 'Home',
+    to: '/logfiles',
     icon: 'i-lucide-house',
     active: true
   },
