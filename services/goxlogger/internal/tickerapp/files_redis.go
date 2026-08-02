@@ -130,6 +130,20 @@ func (f *FileRedis) SaveFiles(files []File) error {
 	return nil
 }
 
+func (f *FileRedis) GetFiles() ([]File, error) {
+	cmd := f.redisClient.HGetAll(f.ctx, f.Key)
+	if cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+
+	var files []File
+	for name, path := range cmd.Val() {
+		files = append(files, File{Name: name, Path: path})
+	}
+
+	return files, nil
+}
+
 // GetLocalLogs retrieves all the log files in the root directory
 // and returns them as a slice of File structs
 func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {

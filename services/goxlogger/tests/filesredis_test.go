@@ -14,7 +14,7 @@ import (
 func instanceFixture() *tickerapp.FileRedis {
 	ctx := context.WithValue(context.Background(), "rootDir", "../")
 
-	redisClient := backend.NewRedisBackend()
+	redisClient := backend.NewRedisBackend(ctx)
 	filesRedis := tickerapp.NewFileRedis(ctx, redisClient)
 
 	return filesRedis
@@ -51,7 +51,7 @@ func TestSaveFiles(t *testing.T) {
 		assert.Nil(t, err)
 
 		t.Cleanup(func() {
-			redisClient := backend.NewRedisBackend()
+			redisClient := backend.NewRedisBackend(t.Context())
 			redisClient.FlushAll(context.Background()).Err()
 		})
 	})
@@ -95,7 +95,7 @@ func TestCacheContent(t *testing.T) {
 func TestImplementation(t *testing.T) {
 	ctx := context.WithValue(t.Context(), "rootDir", "../")
 
-	redisClient := backend.NewRedisBackend()
+	redisClient := backend.NewRedisBackend(ctx)
 	filesRedis := tickerapp.NewFileRedis(ctx, redisClient)
 
 	t.Run("Should load files", func(t *testing.T) {

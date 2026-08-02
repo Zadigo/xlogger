@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/Zadigo/goxlogger/internal/models"
@@ -20,12 +18,14 @@ type BaseRouteHandlers struct {
 	serverConfig *utils.ServerConfig
 }
 
+// Deprecated: Set the context for the handler by using SetApp
 func (h *BaseRouteHandlers) SetContext(ctx context.Context) {
 	h.ctx = ctx
 }
 
 func (h *BaseRouteHandlers) SetApp(app models.AppInterface) {
 	h.app = app
+	h.redisClient = app.GetRedisClient()
 }
 
 func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request) {
@@ -51,6 +51,17 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
+	filesRedis := tickerapp.NewFileRedis(h.ctx, h.redisClient)
+	files, err := filesRedis.GetFiles()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.JsonResponse(w, files, http.StatusOK)
+}
+
 func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 	logsRedis := tickerapp.NewLogsRedis(h.ctx, h.redisClient)
 	logs, err := logsRedis.GetLogs()
@@ -60,60 +71,5 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// data, err := json.Marshal(logs)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// w.Header().Set("Content-Type", "application/json")
-	// w.WriteHeader(http.StatusOK)
-	// w.Write(data)
-
-	// Chunked transfer encoding
-	// w.Header().Set("Transfer-Encoding", "chunked")
-	// w.Header().Set("Content-Type", "text/plain")
-
-	// flusher, ok := w.(http.Flusher)
-	// if !ok {
-	//     http.Error(w, "streaming not supported", http.StatusInternalServerError)
-	//     return
-	// }
-
-	// w.Header().Set("Content-Type", "application/json")
-	// // No need to set Transfer-Encoding manually, Go sets it automatically
-
-	// encoder := json.NewEncoder(w)
-	// for _, log := range logs {
-	//     if err := encoder.Encode(log); err != nil {
-	//         return // client likely disconnected
-	//     }
-	//     flusher.Flush() // sends the chunk immediately
-	// }
-
-	// SSE
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming not supported", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-
-	for i, log := range logs {
-		data, err := json.Marshal(log)
-		if err != nil {
-			continue
-		}
-
-		// SSE format: "data: <payload>\n\n"
-		fmt.Fprintf(w, "id: %d\nevent: log\ndata: %s\n\n", i, data)
-		flusher.Flush()
-	}
-
-	// Optional: signal the client that the stream is done
-	fmt.Fprintf(w, "event: done\ndata: {}\n\n")
-	flusher.Flush()
+	utils.JsonResponse(w, logs, http.StatusOK)
 }

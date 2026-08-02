@@ -6,13 +6,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func NewRedisBackend() *redis.Client {
+func NewRedisBackend(ctx context.Context) *redis.Client {
 	instance := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 		DB:   0,
 	})
 
-	err := instance.Ping(context.Background()).Err()
+	err := instance.Ping(ctx).Err()
 	if err != nil {
 		panic(err)
 	}

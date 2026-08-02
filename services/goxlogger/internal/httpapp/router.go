@@ -23,7 +23,7 @@ func (a *App) loadRoutes() {
 	a.router.Use(middlewares.JsonHeartbeat("/health"))
 	a.router.Use(middleware.Timeout(60 * time.Second))
 
-	a.router.Route("/todos", a.loadBaseRoutes)
+	a.router.Route("/files", a.loadBaseRoutes)
 }
 
 func (a *App) loadBaseRoutes(router chi.Router) {
@@ -34,5 +34,6 @@ func (a *App) loadBaseRoutes(router chi.Router) {
 
 	router.Use(middlewares.TodoMiddleware)
 
-	router.Get("/", baseHandlers.GetLogs)
+	router.Get("/", baseHandlers.GetFiles)
+	router.Get("/files/${fileId}", baseHandlers.GetLogs)
 }
