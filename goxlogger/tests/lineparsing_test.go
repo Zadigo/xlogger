@@ -82,12 +82,12 @@ func TestParseLine(t *testing.T) {
 }
 
 func TestAndroidAnalyzer(t *testing.T) {
-	testLines := []string{
+	testlines := []string{
 		"Mozilla/5.0 (Linux; Android 4.4.3; KFTHWI Build/KTU84M) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/34.0.0.0 Safari/537.36",
 		"Mozilla/5.0 (Linux; Android 5.1.1; Nexus 7 Build/LMY48I) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.84 Safari/537.36",
 	}
 
-	for _, line := range testLines {
+	for _, line := range testlines {
 		t.Run(fmt.Sprintf("Testing line: %s", line), func(t *testing.T) {
 			agent := &logic.UserAgent{RawValue: line}
 
@@ -96,6 +96,53 @@ func TestAndroidAnalyzer(t *testing.T) {
 
 			assert.Equal(t, "Linux;", agent.OperatingSystemPlatform, fmt.Sprintf("Expected platform 'Linux;', got '%s'", agent.OperatingSystemPlatform))
 			assert.Equal(t, "Android", agent.OperatingSystemKernel, fmt.Sprintf("Expected OS 'Android', got '%s'", agent.OperatingSystemKernel))
+			assert.NotEmpty(t, agent.OperatingSystemBuildVersion, "Expected OS version to be non-empty")
+		})
+	}
+}
+
+func TestMacAnalyzer(t *testing.T) {
+	testlines := []string{
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36",
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/600.4.10 (KHTML, like Gecko) Version/7.1.4 Safari/537.85.13",
+	}
+
+	for _, line := range testlines {
+		t.Run(fmt.Sprintf("Testing line: %s", line), func(t *testing.T) {
+			agent := &logic.UserAgent{RawValue: line}
+
+			analyzer := &logic.MacAnalyzer{}
+			analyzer.Execute(agent)
+
+			assert.Equal(t, "Macintosh", agent.OperatingSystemPlatform, fmt.Sprintf("Expected platform 'Macintosh', got '%s'", agent.OperatingSystemPlatform))
+			assert.Equal(t, "Intel", agent.OperatingSystemKernel, fmt.Sprintf("Expected OS 'Intel', got '%s'", agent.OperatingSystemKernel))
+			assert.NotEmpty(t, agent.OperatingSystemBuildVersion, "Expected OS version to be non-empty")
+		})
+	}
+}
+
+func TestWindowsAnalyzer(t *testing.T) {
+	type TestCase struct {
+		name string
+		line string
+	}
+
+	testCases := []TestCase{
+		{name: "test_with_wow", line: "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0"},
+		{name: "test_with_trident", line: "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko"},
+		{name: "test_with_touch", line: "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; ASU2JS; rv:11.0) like Gecko"},
+		{name: "test_with_touch", line: "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; MALNJS; rv:11.0) like Gecko"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			agent := &logic.UserAgent{RawValue: tc.line}
+
+			analyzer := &logic.WindowsAnalyzer{}
+			analyzer.Execute(agent)
+
+			assert.Equal(t, "Windows NT", agent.OperatingSystemPlatform, fmt.Sprintf("Expected platform 'Windows', got '%s'", agent.OperatingSystemPlatform))
 			assert.NotEmpty(t, agent.OperatingSystemBuildVersion, "Expected OS version to be non-empty")
 		})
 	}

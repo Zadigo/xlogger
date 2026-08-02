@@ -6,6 +6,32 @@ import (
 	"strings"
 )
 
+type Architecture struct {
+	Version string `json:"version"`
+	Is64Bit bool   `json:"is_64_bit"` // Indicates whether the user agent is running on a 64-bit architecture
+
+}
+
+type Windows struct {
+	Version              string `json:"version"`
+	LayoutEngine         string `json:"layout_engine"`
+	LayoutEngineVersion  string `json:"layout_engine_version"`
+	BrowserVersion       string `json:"browser_version"`
+	HasCompatibilityView bool   `json:"has_compatibility_view"` // Indicates whether the browser is in compatibility view mode
+	MSIEVersion          string `json:"msie_version"`           // Microsoft Internet Explorer (MSIE) version information, if applicable
+	IsMSIE               bool   `json:"is_msie"`                // Indicates whether the user agent is Microsoft Internet Explorer (MSIE)
+	Is32Bit              bool   `json:"is_32_bit"`              // Indicates whether the user agent is running on a 32-bit architecture
+	Is64Bit              bool   `json:"is_64_bit"`              // Indicates whether the user agent is running on a 64-bit architecture
+	IsTouch              bool   `json:"is_touch"`               // Indicates whether the device has touch capabilities
+}
+
+type Macintosh struct {
+	Architecture
+	ProcessorArchitecture string `json:"processor_architecture"`
+	IsIntel               bool   `json:"is_intel"`   // Indicates whether the user agent is running on an Intel-based Macintosh
+	IsSiliconChip         bool   `json:"is_silicon"` // Indicates whether the user agent is running on an Apple Silicon-based Macintosh
+}
+
 type UserAgent struct {
 	// The raw user agent string as received from the client
 	RawValue string `json:"raw_value"`
@@ -25,6 +51,10 @@ type UserAgent struct {
 	HardwareModelIdentifier string `json:"hardware_model_identifier"`
 	// The operating system version of the platform (e.g., 10.15.7, 11.2.3)
 	OperatingSystemBuildVersion string `json:"operating_system_build_version"`
+	// The WindowsInfo field contains additional information about the Windows operating system, if applicable
+	WindowsInfo *Windows `json:"windows_info,omitempty"`
+	// The MacintoshInfo field contains additional information about the Macintosh operating system, if applicable
+	MacintoshInfo *Macintosh `json:"macintosh_info,omitempty"`
 }
 
 func (a *UserAgent) MatchRegex(regex string) []string {
@@ -92,11 +122,17 @@ type MacAnalyzer struct {
 
 func (m *MacAnalyzer) Execute(agent *UserAgent) {
 	if strings.Contains(agent.RawValue, "Macintosh") || strings.Contains(agent.RawValue, "Mac OS") {
-		matchedMac := agent.MatchRegex(`(?:.*)(Macintosh)\; (Intel)? Mac (OS \w+) (.*\d+)\)\s`)
-		if matchedMac != nil {
-			agent.OperatingSystemPlatform = matchedMac[1]
-			agent.OperatingSystemKernel = matchedMac[2]
-			agent.OperatingSystemBuildVersion = matchedMac[4]
+		agent.OperatingSystemPlatform = "Macintosh"
+		agent.MacintoshInfo = &Macintosh{}
+
+		matched := agent.MatchRegex(`Macintosh; (Intel)`)
+		if matched != nil {
+			agent.MacintoshInfo.IsIntel = true
+		}
+
+		matched = agent.MatchRegex(`Macintosh;.*Mac OS (\w+) (\d+\_\d+\_\d+)`)
+		if matched != nil {
+			agent.OperatingSystemBuildVersion = strings.ReplaceAll(matched[2], "_", ".")
 		}
 	} else {
 		if m.next != nil {
@@ -107,6 +143,62 @@ func (m *MacAnalyzer) Execute(agent *UserAgent) {
 
 func (m *MacAnalyzer) setNext(next AnalyzerInterface) {
 	m.next = next
+}
+
+// WindowsAnalyzer is responsible for analyzing user agent strings that
+// contain "Windows" and extracting relevant information.
+type WindowsAnalyzer struct {
+	next AnalyzerInterface
+}
+
+func (w *WindowsAnalyzer) Execute(agent *UserAgent) {
+	if strings.Contains(agent.RawValue, "Windows") {
+		agent.OperatingSystemPlatform = "Windows NT"
+
+		// e.g. (Windows NT 6.3; WOW64)
+		matched := agent.MatchRegex(`Windows NT\s(\d+\.\d?); (WOW\d+)`)
+		if matched != nil {
+			agent.OperatingSystemBuildVersion = matched[1]
+			agent.WindowsInfo = &Windows{
+				Version: matched[1],
+				Is32Bit: matched[2] == "WOW32",
+				Is64Bit: matched[2] == "WOW64",
+			}
+		}
+
+		// e.g. (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0)
+		matched = agent.MatchRegex(`Windows NT.*(Trident\W(\d+\.\d+))`)
+		if matched != nil {
+			agent.WindowsInfo.LayoutEngine = matched[1]
+			agent.WindowsInfo.LayoutEngineVersion = matched[2]
+		}
+
+		matched = agent.MatchRegex(`Windows NT.*(Touch)`)
+		if matched != nil {
+			agent.WindowsInfo.IsTouch = true
+		}
+
+		matched = agent.MatchRegex(`Windows NT.*(MSIE\W(\d+\.\d+))`)
+		if matched != nil {
+			agent.WindowsInfo.MSIEVersion = matched[2]
+			agent.WindowsInfo.IsMSIE = true
+			agent.WindowsInfo.BrowserVersion = matched[2]
+		}
+
+		// e.g. (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0)
+		matched = agent.MatchRegex(`Windows NT.*(rv\:(\d+\.\d+))`)
+		if matched != nil {
+			agent.WindowsInfo.BrowserVersion = matched[2]
+		}
+	} else {
+		if w.next != nil {
+			w.next.Execute(agent)
+		}
+	}
+}
+
+func (w *WindowsAnalyzer) setNext(next AnalyzerInterface) {
+	w.next = next
 }
 
 // BrowserAnalyzer is responsible for analyzing user agent strings that
@@ -132,7 +224,10 @@ func (b *BrowserAnalyzer) setNext(next AnalyzerInterface) {
 }
 
 func NewUserAgentAnalysis(value string) *UserAgent {
-	agent := &UserAgent{RawValue: value}
+	agent := &UserAgent{
+		RawValue:    value,
+		WindowsInfo: &Windows{},
+	}
 
 	baseAnalyzer := &BaseAnalyzer{}
 

@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-
-
 // MetaData struct contains various boolean fields that indicate
 // specific characteristics of the path of the request which can
 // be useful for further vulnerability analysis.
@@ -42,6 +40,10 @@ type MetaData struct {
 	IsNuxt bool `json:"is_nuxt"`
 	// IsGponRouter indicates if the request is related to a GPON router
 	IsGponRouter bool `json:"is_gpon_router"`
+	// IsWindows indicates the request tried to access a Windows path (e.g., contains backslashes)
+	IsWindowsPath bool `json:"is_windows"`
+	// IsGitHub indicates if the request is related to GitHub (e.g., contains ".git" in the path or user agent)
+	IsGitHub bool `json:"is_github"`
 }
 
 type LogLine struct {
@@ -168,6 +170,16 @@ func (l LogLine) ParseLine() (line LogLine, err error) {
 
 	if strings.Contains(strings.ToLower(l.Path), "gpon") {
 		l.MetaData.IsGponRouter = true
+	}
+
+	if strings.Contains(l.Path, "/.git") {
+		l.MetaData.IsGitHub = true
+	}
+
+	regex := regexp.MustCompile(`\w+\:\/[Ww]indows`)
+	matched = regex.FindStringSubmatch(l.Path)
+	if matched != nil {
+		l.MetaData.IsWindowsPath = true
 	}
 
 	return l, nil
