@@ -8,8 +8,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// LogRedis contains all the logic to save, retrieve
-// and manage logs in Redis
+// LogRedis contains all the logic to save, 
+// retrieve and manage logs in Redis
 type LogRedis struct {
 	ctx         context.Context
 	redisClient *redis.Client
@@ -95,6 +95,7 @@ func (l *LogRedis) StartBroadcaster() <-chan error {
 	return ch
 }
 
+// NewLogsRedis creates a new instance of LogRedis that is used to manage logs in Redis
 func NewLogsRedis(ctx context.Context, redisClient *redis.Client) *LogRedis {
 	return &LogRedis{
 		ctx:         ctx,

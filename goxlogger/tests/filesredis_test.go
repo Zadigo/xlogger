@@ -1,30 +1,53 @@
 package tests
 
 import (
-	"fmt"
+	"context"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/Zadigo/goxlogger/internal/backend"
 	"github.com/Zadigo/goxlogger/internal/logic"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTestFilesRedis(t *testing.T) {
-	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-	filesRedis := logic.NewFileRedis(t.Context(), redisClient)
+func instanceFixture() *logic.FileRedis {
+	ctx := context.WithValue(context.Background(), "rootDir", "../")
+
+	redisClient := backend.NewRedisBackend()
+	filesRedis := logic.NewFileRedis(ctx, redisClient)
+
+	return filesRedis
+}
+
+func TestGetLocalLogs(t *testing.T) {
+	filesRedis := instanceFixture()
+	files, err := filesRedis.GetLocalLogs("/data")
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, files)
+	assert.NoError(t, err)
+	assert.True(t, len(files) > 0)
+
+	for _, file := range files {
+		fileInfo, err := os.Stat(file.Path)
+		assert.Nil(t, err)
+		assert.NotNil(t, fileInfo)
+	}
+}
+
+func TestImplementation(t *testing.T) {
+	ctx := context.WithValue(t.Context(), "rootDir", "../")
+
+	redisClient := backend.NewRedisBackend()
+	filesRedis := logic.NewFileRedis(ctx, redisClient)
 
 	t.Run("Should load files", func(t *testing.T) {
 		files, err := filesRedis.GetLocalLogs("/data")
 		assert.Nil(t, err)
 		assert.NotEmpty(t, files)
-		fmt.Print(files)
-	})
-
-	t.Run("Should get files details", func(t *testing.T) {
-		file := filesRedis.FileFromString("../data/test.log")
-		assert.Equal(t, "test.log", file.Name)
-		assert.Equal(t, "../data/test.log", file.Path)
+		assert.NoError(t, err)
+		assert.True(t, len(files) > 0)
 	})
 
 	t.Run("Should save files", func(t *testing.T) {

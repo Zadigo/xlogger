@@ -14,6 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// File represents a log file with its name and path
 type File struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
@@ -27,10 +28,13 @@ type FileRedis struct {
 	redisClient *redis.Client
 }
 
-func (f *FileRedis) FileFromString(path string) File {
+// fileFromString creates a File struct from a given path and adds it to the Files slice
+func (f *FileRedis) fileFromString(path string) File {
 	baseName := filepath.Base(path)
+
 	file := File{Name: baseName, Path: path}
 	f.Files = append(f.Files, file)
+	
 	return file
 }
 
@@ -84,13 +88,13 @@ func (f *FileRedis) SaveFiles(files []File) error {
 // and returns them as a slice of File structs
 func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {
 	var files []File
-	_path := strings.TrimSuffix(path, "/")
+	trimmedPath := strings.TrimSuffix(path, "/")
 
-	if _path == "" {
-		_path = "data"
+	if trimmedPath == "" {
+		trimmedPath = "data"
 	}
 
-	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", _path))
+	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", trimmedPath))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +106,7 @@ func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {
 		}
 
 		if !info.IsDir() {
-			files = append(files, f.FileFromString(path))
+			files = append(files, f.fileFromString(path))
 		}
 
 		return nil
