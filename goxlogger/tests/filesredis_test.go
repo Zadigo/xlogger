@@ -81,9 +81,14 @@ func TestCacheContent(t *testing.T) {
 		err := fileRedis.CacheLogs("example1.log", content)
 		assert.Nil(t, err)
 
-		// cachedContent, err := fileRedis.GetLogs("example1.log")
-		// assert.Nil(t, err)
-		// assert.Equal(t, content, cachedContent)
+		cachedContent, err := fileRedis.GetLogs("example1.log")
+		assert.Nil(t, err)
+		assert.NotEmpty(t, cachedContent)
+		// assert.Equal(t, []logic.LogLine{
+		// 	{RawLine: "line1"},
+		// 	{RawLine: "line2"},
+		// 	{RawLine: "line3"},
+		// }, cachedContent)
 	})
 }
 

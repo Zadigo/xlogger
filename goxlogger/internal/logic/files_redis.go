@@ -74,7 +74,7 @@ func (f *FileRedis) DeleteFile() error {
 
 // GetLogs retrieves the cached logs for a specific file from Redis
 // and returns them as a slice of LogLine structs
-func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
+func (f *FileRedis) GetLogs(name string) (lines []LogLine, err error) {
 	cmd := f.redisClient.LRange(f.ctx, fmt.Sprintf("go-xlogger:%s", name), 0, -1)
 	if cmd.Err() != nil {
 		return nil, cmd.Err()
@@ -83,10 +83,14 @@ func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
 	var logs []LogLine
 	for _, log := range cmd.Val() {
 		line := LogLine{RawLine: log}
+		// When a line cannot be parsed, 
+		// we skip it and continue with the next line
 		_, err := line.ParseLine()
+
 		if err != nil {
 			continue
 		}
+		
 		logs = append(logs, line)
 	}
 
