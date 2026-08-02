@@ -13,7 +13,7 @@ import (
 
 type BaseRouteHandlers struct {
 	ctx          context.Context
-	rooDir       string
+	rootDir      string
 	redisClient  *redis.Client
 	serverConfig *models.ServerConfig
 }
@@ -29,7 +29,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 	middleware := WebsocketMiddleware{}
 	middleware.Handle(conn)
 
-	logic.NewFileRedis(h.ctx, h.rooDir, h.redisClient)
+	logic.NewFileRedis(h.ctx, h.redisClient)
 
 	for {
 		var message any
@@ -108,10 +108,10 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 	flusher.Flush()
 }
 
-func NewBaseRouteHandlers(ctx context.Context, rooDir string, redisClient *redis.Client, serverConfig *models.ServerConfig) *BaseRouteHandlers {
+func NewBaseRouteHandlers(ctx context.Context, rootDir string, redisClient *redis.Client, serverConfig *models.ServerConfig) *BaseRouteHandlers {
 	return &BaseRouteHandlers{
 		ctx:          ctx,
-		rooDir:       rooDir,
+		rootDir:      rootDir,
 		redisClient:  redisClient,
 		serverConfig: serverConfig,
 	}

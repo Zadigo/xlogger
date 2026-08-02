@@ -1,4 +1,4 @@
-package server
+package httpapp
 
 import (
 	"github.com/Zadigo/goxlogger/internal/models"

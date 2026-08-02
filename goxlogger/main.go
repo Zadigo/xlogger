@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 
-	"github.com/Zadigo/goxlogger/internal/server"
+	"github.com/Zadigo/goxlogger/internal/httpapp"
 	"github.com/joho/godotenv"
 )
 
@@ -26,7 +26,7 @@ func main() {
 	ctx = context.WithValue(ctx, "rootDir", rootDir)
 	ctx = context.WithValue(ctx, "debugMode", os.Getenv("DEBUG_MODE") == "true")
 
-	app := server.NewApp(ctx, server.LoadConfig(rootDir))
+	app := httpapp.NewApp(ctx, httpapp.LoadConfig(rootDir))
 	err = app.Start()
 
 	if err != nil {

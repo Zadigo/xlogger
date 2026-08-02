@@ -12,7 +12,7 @@ import (
 
 func TestTestFilesRedis(t *testing.T) {
 	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-	filesRedis := logic.NewFileRedis(t.Context(), "../data", redisClient)
+	filesRedis := logic.NewFileRedis(t.Context(), redisClient)
 
 	t.Run("Should load files", func(t *testing.T) {
 		files, err := filesRedis.GetLocalLogs("/data")

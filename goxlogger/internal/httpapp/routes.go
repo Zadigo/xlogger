@@ -1,4 +1,4 @@
-package server
+package httpapp
 
 import (
 	"time"

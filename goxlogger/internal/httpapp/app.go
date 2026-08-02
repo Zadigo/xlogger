@@ -1,4 +1,4 @@
-package server
+package httpapp
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func (a *App) Start() error {
 	}()
 
 	// Log server
-	logServer := logic.NewLogsService(a.ctx, a.config.RootDir, false)
+	logServer := logic.NewLogsService(a.ctx)
 	logServer.StartServer(a.config, a.redisClient)
 
 	select {
