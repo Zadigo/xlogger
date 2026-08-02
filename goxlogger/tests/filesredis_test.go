@@ -7,15 +7,15 @@ import (
 	"testing"
 
 	"github.com/Zadigo/goxlogger/internal/backend"
-	"github.com/Zadigo/goxlogger/internal/logic"
+	"github.com/Zadigo/goxlogger/internal/tickerapp"
 	"github.com/stretchr/testify/assert"
 )
 
-func instanceFixture() *logic.FileRedis {
+func instanceFixture() *tickerapp.FileRedis {
 	ctx := context.WithValue(context.Background(), "rootDir", "../")
 
 	redisClient := backend.NewRedisBackend()
-	filesRedis := logic.NewFileRedis(ctx, redisClient)
+	filesRedis := tickerapp.NewFileRedis(ctx, redisClient)
 
 	return filesRedis
 }
@@ -40,7 +40,7 @@ func TestSaveFiles(t *testing.T) {
 	t.Run("should save file", func(t *testing.T) {
 		fileRedis := instanceFixture()
 
-		testFile := []logic.File{
+		testFile := []tickerapp.File{
 			{
 				Name: "example1.log",
 				Path: filepath.Join("../data", "example1.log"),
@@ -96,7 +96,7 @@ func TestImplementation(t *testing.T) {
 	ctx := context.WithValue(t.Context(), "rootDir", "../")
 
 	redisClient := backend.NewRedisBackend()
-	filesRedis := logic.NewFileRedis(ctx, redisClient)
+	filesRedis := tickerapp.NewFileRedis(ctx, redisClient)
 
 	t.Run("Should load files", func(t *testing.T) {
 		files, err := filesRedis.GetLocalLogs("/data")

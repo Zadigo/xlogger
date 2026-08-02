@@ -4,6 +4,16 @@ Go X-Logger is a lightweight and flexible logging library made with Go which all
 
 It comes with an integrated MCP server based on mcp-golang which allows any AI agent to interrogate the logs.
 
+## Global Architecture
+
+```mermaid
+flowchart
+
+S(Server) --> M(MCP)
+S --> |http|C(Chi HTTP)
+S --> |cron|T(Ticker)
+```
+
 ## Architecture
 
 ```mermaid

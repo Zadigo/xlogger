@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"github.com/Zadigo/goxlogger/internal/logic"
+	"github.com/Zadigo/goxlogger/internal/tickerapp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +30,7 @@ func TestLogLine(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			line := logic.LogLine{RawLine: tc.line}
+			line := tickerapp.LogLine{RawLine: tc.line}
 			parsedLine, err := line.ParseLine()
 			assert.Nil(t, err)
 			assert.Equal(t, "GET", parsedLine.Method)

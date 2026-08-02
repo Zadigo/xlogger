@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Zadigo/goxlogger/internal/logic"
+	"github.com/Zadigo/goxlogger/internal/tickerapp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +60,7 @@ func TestParseLine(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			rawLine := logic.LogLine{RawLine: tc.line}
+			rawLine := tickerapp.LogLine{RawLine: tc.line}
 			line, err := rawLine.ParseLine()
 
 			assert.NotEmpty(t, line)
@@ -89,9 +89,9 @@ func TestAndroidAnalyzer(t *testing.T) {
 
 	for _, line := range testlines {
 		t.Run(fmt.Sprintf("Testing line: %s", line), func(t *testing.T) {
-			agent := &logic.UserAgent{RawValue: line}
+			agent := &tickerapp.UserAgent{RawValue: line}
 
-			analyzer := &logic.AndroidAnalyzer{}
+			analyzer := &tickerapp.AndroidAnalyzer{}
 			analyzer.Execute(agent)
 
 			assert.Equal(t, "Linux;", agent.OperatingSystemPlatform, fmt.Sprintf("Expected platform 'Linux;', got '%s'", agent.OperatingSystemPlatform))
@@ -109,9 +109,9 @@ func TestMacAnalyzer(t *testing.T) {
 
 	for _, line := range testlines {
 		t.Run(fmt.Sprintf("Testing line: %s", line), func(t *testing.T) {
-			agent := &logic.UserAgent{RawValue: line}
+			agent := &tickerapp.UserAgent{RawValue: line}
 
-			analyzer := &logic.MacAnalyzer{}
+			analyzer := &tickerapp.MacAnalyzer{}
 			analyzer.Execute(agent)
 
 			assert.Equal(t, "Macintosh", agent.OperatingSystemPlatform, fmt.Sprintf("Expected platform 'Macintosh', got '%s'", agent.OperatingSystemPlatform))
@@ -137,9 +137,9 @@ func TestWindowsAnalyzer(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			agent := &logic.UserAgent{RawValue: tc.line}
+			agent := &tickerapp.UserAgent{RawValue: tc.line}
 
-			analyzer := &logic.WindowsAnalyzer{}
+			analyzer := &tickerapp.WindowsAnalyzer{}
 			analyzer.Execute(agent)
 
 			assert.Equal(t, "Windows NT", agent.OperatingSystemPlatform, fmt.Sprintf("Expected platform 'Windows', got '%s'", agent.OperatingSystemPlatform))

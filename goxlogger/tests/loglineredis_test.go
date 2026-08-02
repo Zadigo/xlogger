@@ -3,17 +3,17 @@ package tests
 import (
 	"testing"
 
-	"github.com/Zadigo/goxlogger/internal/logic"
+	"github.com/Zadigo/goxlogger/internal/tickerapp"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLogsRedis(t *testing.T) {
 	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-	logRedis := logic.NewLogsRedis(t.Context(), redisClient)
+	logRedis := tickerapp.NewLogsRedis(t.Context(), redisClient)
 
 	t.Run("Should save logs to Redis", func(t *testing.T) {
-		logLines := []logic.LogLine{
+		logLines := []tickerapp.LogLine{
 			{RawLine: "Log line 1"},
 			{RawLine: "Log line 2"},
 		}
@@ -38,10 +38,10 @@ func TestBroadcastLog(t *testing.T) {
 	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 
 	t.Run("Should broadcast logs", func(t *testing.T) {
-		logRedis := logic.NewLogsRedis(t.Context(), redisClient)
+		logRedis := tickerapp.NewLogsRedis(t.Context(), redisClient)
 		logRedis.StartBroadcaster()
 
-		logLine := logic.LogLine{RawLine: "Broadcast log line"}
+		logLine := tickerapp.LogLine{RawLine: "Broadcast log line"}
 		logRedis.BroadcastLog(logLine)
 	})
 }

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Zadigo/goxlogger/internal/logic"
 	"github.com/Zadigo/goxlogger/internal/models"
+	"github.com/Zadigo/goxlogger/internal/tickerapp"
 	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
@@ -39,7 +39,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 	middleware := WebsocketMiddleware{}
 	middleware.Handle(conn)
 
-	logic.NewFileRedis(h.ctx, h.redisClient)
+	tickerapp.NewFileRedis(h.ctx, h.redisClient)
 
 	for {
 		var message any
@@ -52,7 +52,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
-	logsRedis := logic.NewLogsRedis(h.ctx, h.redisClient)
+	logsRedis := tickerapp.NewLogsRedis(h.ctx, h.redisClient)
 	logs, err := logsRedis.GetLogs()
 
 	if err != nil {
