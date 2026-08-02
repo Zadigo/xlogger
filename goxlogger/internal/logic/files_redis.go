@@ -34,7 +34,7 @@ func (f *FileRedis) fileFromString(path string) File {
 
 	file := File{Name: baseName, Path: path}
 	f.Files = append(f.Files, file)
-	
+
 	return file
 }
 

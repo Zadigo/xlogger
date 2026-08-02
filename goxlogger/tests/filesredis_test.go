@@ -36,6 +36,43 @@ func TestGetLocalLogs(t *testing.T) {
 	}
 }
 
+func TestSaveFiles(t *testing.T) {
+	t.Run("should save file", func(t *testing.T) {
+		fileRedis := instanceFixture()
+
+		testFile := []logic.File{
+			{
+				Name: "example1.log",
+				Path: filepath.Join("../data", "example1.log"),
+			},
+		}
+
+		err := fileRedis.SaveFiles(testFile)
+		assert.Nil(t, err)
+
+		t.Cleanup(func() {
+			redisClient := backend.NewRedisBackend()
+			redisClient.FlushAll(context.Background()).Err()
+		})
+	})
+}
+
+func TestReadFile(t *testing.T) {
+	filesRedis := instanceFixture()
+
+	path := t.TempDir()
+	fullPath := filepath.Join(path, "example.log")
+	os.WriteFile(fullPath, []byte(`146.70.194.73 - - [20/Oct/2025:20:50:30 +0000] "GET /blog/insights/les-9-meilleurs-generateurs-de-videos-par-ia HTTP/2.0" 200 38314 "-" "-" 1 "myprosite@docker" "http://172.21.0.18:8000" 89ms`), 0644)
+
+	t.Run("should read file", func(t *testing.T) {
+		logs, err := filesRedis.ReadFile(fullPath, nil)
+
+		assert.Nil(t, err)
+		assert.NotEmpty(t, logs)
+		assert.True(t, len(logs) > 0)
+	})
+}
+
 func TestImplementation(t *testing.T) {
 	ctx := context.WithValue(t.Context(), "rootDir", "../")
 
