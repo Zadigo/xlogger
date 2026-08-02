@@ -151,7 +151,9 @@ func (f *FileRedis) CacheContent(fileName string, content []string) error {
 	return nil
 }
 
-func NewFileRedis(ctx context.Context, rootDir string, redisClient *redis.Client) *FileRedis {
+func NewFileRedis(ctx context.Context, redisClient *redis.Client) *FileRedis {
+	rootDir := ctx.Value("rootDir").(string)
+
 	return &FileRedis{
 		ctx:         ctx,
 		rootDir:     rootDir,

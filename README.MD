@@ -8,14 +8,25 @@ It comes with an integrated MCP server based on mcp-golang which allows any AI a
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant GoXLogger
-    participant MCPServer
 
-    User->>GoXLogger: Log message (info, warning, error)
-    GoXLogger->>MCPServer: Store log message
-    User->>MCPServer: Query logs
-    MCPServer->>GoXLogger: Retrieve relevant log messages
-    GoXLogger->>MCPServer: Return log messages
-    MCPServer->>User: Display log messages
+autonumber
+  
+actor U as User
+participant F@{type: "entity"} as File
+participant T as Ticker
+participant C@{type: "entity"} as Claude
+participant R@{type: "database"} as Redis
+participant M as MCPServer
+
+U->>F: Log message (info, warning, error)
+
+par message analysis
+F<<-->>T: Analyze file
+T->>R: Store log message
+end 
+
+U->>C: Query logs
+C->>M: Retrieve relevant log messages
+M->>R: Get log messages
+R->>C: Return messages
 ```

@@ -23,6 +23,9 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
+	ctx = context.WithValue(ctx, "rootDir", rootDir)
+	ctx = context.WithValue(ctx, "debugMode", os.Getenv("DEBUG_MODE") == "true")
+
 	app := server.NewApp(ctx, server.LoadConfig(rootDir))
 	err = app.Start()
 
