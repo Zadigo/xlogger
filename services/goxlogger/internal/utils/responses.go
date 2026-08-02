@@ -3,12 +3,24 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 )
 
 type DefaultErrorResponse struct {
 	Detail  string `json:"detail"`
 	Message string `json:"message"`
+}
+
+func (d *DefaultErrorResponse) LogErrorMessage(err ...error) {
+	log.Print(errors.Join(err...).Error())
+}
+
+func (a *DefaultErrorResponse) SendErrorMessage(w http.ResponseWriter, err ...error) {
+	// strErrors := errors.Join(err...).Error()
+	// a.Message = a.Message + " " + strErrors
+	JsonResponse(w, a, http.StatusInternalServerError)
 }
 
 // JsonResponse is a helper function to send JSON responses with a given status code.

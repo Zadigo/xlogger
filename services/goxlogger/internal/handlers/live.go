@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"net/http"
 
 	"github.com/Zadigo/goxlogger/internal/models"
@@ -56,11 +57,25 @@ func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
-	logsRedis := tickerapp.NewLogsRedis(h.app.GetAppContext(), h.redisClient)
-	logs, err := logsRedis.GetLogs()
+	httpErrors := HttpErrors{}
+
+	fileId := r.Context().Value("fileId").(string)
+	if fileId == "" {
+		httpErrors.InvalidFileId(w)
+		return
+	}
+
+	decodedFileName, err := base64.StdEncoding.DecodeString(fileId)
+	if err != nil {
+		httpErrors.InvalidFileId(w)
+		return
+	}
+
+	fileRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.redisClient)
+	logs, err := fileRedis.GetLogs(string(decodedFileName))
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpErrors.FailedToGetLogs(w)
 		return
 	}
 

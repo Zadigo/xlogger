@@ -7,15 +7,15 @@ import (
 	"github.com/go-chi/chi"
 )
 
-const todoUrlParam = "todoId"
+const fileIdUrlParam = "fileId"
 
-func TodoMiddleware(next http.Handler) http.Handler {
+func FileIdMiddleware(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		serviceUuid := chi.URLParam(r, todoUrlParam)
+		fileId := chi.URLParam(r, fileIdUrlParam)
 
 		var ctx context.Context
 
-		ctx = context.WithValue(r.Context(), todoUrlParam, serviceUuid)
+		ctx = context.WithValue(r.Context(), fileIdUrlParam, fileId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)

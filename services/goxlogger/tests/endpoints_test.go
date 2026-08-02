@@ -19,3 +19,15 @@ func TestGetFiles(t *testing.T) {
 		assert.Equal(t, recorder.Code, 200)
 	})
 }
+
+func TestGetLogs(t *testing.T) {
+	recorder := CreateGetLogsRecorder(t)
+
+	t.Run("should return logs", func(t *testing.T) {
+		var logs []tickerapp.LogLine
+		err := json.Unmarshal(recorder.Body.Bytes(), &logs)
+
+		assert.NoError(t, err)
+		assert.Equal(t, recorder.Code, 200)
+	})
+}

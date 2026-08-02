@@ -1,5 +1,8 @@
 package models
 
+import "net/http"
+
 type ErrorInterface interface {
-	SendErrorMessage(err... error)
+	LogErrorMessage(err ...error)
+	SendErrorMessage(w http.ResponseWriter, err ...error)
 }

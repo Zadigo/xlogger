@@ -30,7 +30,20 @@ func CreateGetFilesRecorder(t *testing.T) *httptest.ResponseRecorder {
 	handlers := handlers.BaseRouteHandlers{}
 	handlers.SetApp(app)
 
-	return GenericRecorder(t, "GET", "/files", func(w http.ResponseWriter, r *http.Request) {
+	return GenericRecorder(t, "GET", "/v1/files", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetFiles(w, r)
+	})
+}
+
+func CreateGetLogsRecorder(t *testing.T) *httptest.ResponseRecorder {
+	ctx := context.WithValue(t.Context(), "rootDir", "../")
+
+	app := httpapp.NewApp(ctx)
+
+	handlers := handlers.BaseRouteHandlers{}
+	handlers.SetApp(app)
+
+	return GenericRecorder(t, "GET", "/v1/files/ZXhhbXBsZTEubG9n", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetLogs(w, r)
 	})
 }

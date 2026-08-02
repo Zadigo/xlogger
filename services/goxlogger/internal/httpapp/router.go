@@ -26,13 +26,15 @@ func (a *App) loadRoutes() {
 	a.router.Route("/v1/files", a.loadBaseRoutes)
 }
 
-func (a *App) loadBaseRoutes(router chi.Router) {
+func (a *App) loadBaseRoutes(r chi.Router) {
 	baseHandlers := &handlers.BaseRouteHandlers{}
 
 	baseHandlers.SetApp(a)
 
-	router.Use(middlewares.TodoMiddleware)
+	r.Get("/", baseHandlers.GetFiles)
 
-	router.Get("/", baseHandlers.GetFiles)
-	router.Get("/files/${fileId}", baseHandlers.GetLogs)
+	r.Route("/{fileId}", func(r chi.Router) {
+		r.Use(middlewares.FileIdMiddleware)
+		r.Get("/", baseHandlers.GetLogs)
+	})
 }

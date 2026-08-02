@@ -1,10 +1,17 @@
 package httpapp
 
-import "github.com/Zadigo/goxlogger/internal/models"
+import (
+	"net/http"
 
-type AppErrors struct{}
+	"github.com/Zadigo/goxlogger/internal/models"
+	"github.com/Zadigo/goxlogger/internal/utils"
+)
 
-func (a *AppErrors) SendErrorMessage(err ...error) {
+type AppErrors struct {
+	utils.DefaultErrorResponse
+}
+
+func (a *AppErrors) SendErrorMessage(w http.ResponseWriter, err ...error) {
 
 }
 

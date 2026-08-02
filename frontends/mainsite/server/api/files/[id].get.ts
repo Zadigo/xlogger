@@ -2,10 +2,9 @@ import type { LogFileContent } from '~~/app/types'
 import { createErrorTemplate } from '~~/app/utils/error'
 
 export default defineEventHandler(async (event) => {
-  const { id } = getRouterParams(event) as { id: string }
-
   try {
-    return await $fetch<LogFileContent[]>(`/v1/logfiles/${id}`, {
+    const { id } = getRouterParams(event) as { id: string }
+    return await $fetch<LogFileContent[]>(`/v1/files/${id}`, {
       method: 'GET',
       baseURL: 'http://127.0.0.1:9000',
       headers: {
