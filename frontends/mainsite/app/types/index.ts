@@ -3,7 +3,7 @@ import zod from 'zod'
 
 const LogSchema = zod.object({
   id: zod.string(),
-  title: zod.string(),
+  name: zod.string(),
   path: zod.string()
 })
 

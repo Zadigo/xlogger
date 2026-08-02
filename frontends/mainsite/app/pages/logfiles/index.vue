@@ -27,7 +27,7 @@ const logs = computedAsync(async () => {
 
 const hasLogs = computed(() => isDefined(logs) && logs.value.length > 0)
 
-const { columns } = useLogsTable()
+const { columns } = useFilesTable()
 
 const table = useTemplateRef('table')
 

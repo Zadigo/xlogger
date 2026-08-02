@@ -19,10 +19,10 @@ definePageMeta({
   layout: 'admin'
 })
 
-const fileId = useRoute().params.id as string
+const encodedName = useRoute().params.id as string
 
 const fileContents = computedAsync(async () => {
-  return await $fetch<LogFileContent[]>(`/api/files/${fileId}`, {
+  return await $fetch<LogFileContent[]>(`/api/files/${encodedName}`, {
     method: 'GET'
   })
 })

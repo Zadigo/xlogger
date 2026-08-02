@@ -1,13 +1,9 @@
-import { h, resolveComponent } from 'vue'
+import { h } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { LogFile } from '~/types'
-import { NuxtLink, UCheckbox, UBadge } from '#components'
+import { NuxtLink, UCheckbox } from '#components'
 
-export function useLogsTable() {
-  // const UCheckbox = resolveComponent('UCheckbox')
-  // const UBadge = resolveComponent('UBadge')
-  // const NuxtLink = resolveComponent('NuxtLink')
-  
+export function useFilesTable() {
   const columns: TableColumn<LogFile>[] = [
     {
       id: 'select',
@@ -32,10 +28,11 @@ export function useLogsTable() {
       }
     },
     {
-      accessorKey: 'title',
-      header: 'Title',
+      accessorKey: 'name',
+      header: 'Name',
       cell: ({ row }) => {
-        return h(NuxtLink, { to: `/logfiles/${row.getValue('id')}` }, () => row.getValue('title'))
+        const encodedName = base64Name(row.getValue('name'))
+        return h(NuxtLink, { to: `/logfiles/${encodedName}` }, () => row.getValue('name'))
       }
     },
     {
@@ -48,6 +45,11 @@ export function useLogsTable() {
   ]
 
   return {
-    columns
+    columns,
+    base64Name
   }
+}
+
+export function useLogsTable() {
+
 }
