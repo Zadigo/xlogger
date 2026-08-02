@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+
+
 // MetaData struct contains various boolean fields that indicate
 // specific characteristics of the path of the request which can
 // be useful for further vulnerability analysis.
@@ -83,7 +85,7 @@ func (l LogLine) analyzeStatusCode(status int) bool {
 }
 
 // Parses a line of the log file and returns a LogLine struct
-func (l LogLine) ParseLine() (LogLine, error) {
+func (l LogLine) ParseLine() (line LogLine, err error) {
 	// For ^(\S+) - (\S+) \[(.*)\] "(POST|GET|OPTIONS|PATCH|PUT) (.*) (HTTP\/[0-9\.]+)" (\d{3}) (\d+) "(\S+)" "(\S+)" (\d+) "(\S+)" "(\S+)" (\d+)ms$
 	logLineRegex := regexp.MustCompile(`^(\S+) - (\S+) \[([^\]]+)\] "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH) ([^"]+) (HTTP\/[0-9\.]+)" (\d{3}) (\d+) "([^"]*)" "([^"]*)"$`)
 
