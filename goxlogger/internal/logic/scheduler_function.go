@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Zadigo/goxlogger/internal/models"
+	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
-func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *models.ServerConfig, redisClient *redis.Client) {
+func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *utils.ServerConfig, redisClient *redis.Client) {
 	fileRedis := NewFileRedis(ctx, redisClient)
 
-	logFiles, err := fileRedis.GetLocalLogs(serverConfig.YamlConfig.LogServer.Logs.Folder)
+	logFiles, err := fileRedis.GetLocalLogs(serverConfig.LogServer.Logs.Folder)
 
 	if err != nil {
 		ch <- fmt.Errorf("🔴 Could not get log files: %w", err)

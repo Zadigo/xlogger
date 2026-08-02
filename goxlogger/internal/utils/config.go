@@ -1,7 +1,9 @@
-package models
+package utils
 
 import (
+	"context"
 	"os"
+	"path"
 
 	"github.com/goccy/go-yaml"
 )
@@ -13,15 +15,17 @@ type LogServerConfig struct {
 	} `yaml:"logs"`
 }
 
-type YamlConfig struct {
+type ServerConfig struct {
 	LogServer LogServerConfig `yaml:"log_server"`
 	Redis     struct {
 		Addr string `yaml:"addr"`
-	}
+	} `yaml:"redis"`
 }
 
-func (c *YamlConfig) Load(rootDir string) error {
-	filePath := rootDir + "/config.yaml"
+func (c *ServerConfig) Load(ctx context.Context) error {
+	rootDir := ctx.Value("rootDir").(string)
+	filePath := path.Join(rootDir, "config.yaml")
+
 	file, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -31,10 +35,6 @@ func (c *YamlConfig) Load(rootDir string) error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
 
-type ServerConfig struct {
-	RootDir    string
-	YamlConfig YamlConfig
+	return nil
 }

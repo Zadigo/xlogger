@@ -2,87 +2,92 @@ package httpapp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
-	"github.com/Zadigo/goxlogger/internal/logic"
+	"github.com/Zadigo/goxlogger/internal/backend"
 	"github.com/Zadigo/goxlogger/internal/models"
-	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi"
 	"github.com/redis/go-redis/v9"
 )
 
 type App struct {
 	ctx         context.Context
-	redisClient *redis.Client
-	config      *models.ServerConfig
+	parentCtx   context.Context
 	router      *chi.Mux
+	chanErr     chan error
+	redisClient *redis.Client
 }
 
 func (a *App) Start() error {
-	// Redis client
-	err := a.redisClient.Ping(a.ctx).Err()
+	var cancel context.CancelFunc
+	a.ctx, cancel = context.WithCancel(a.parentCtx)
+	defer cancel()
+
+	if a.router == nil {
+		panic("Router is not initialized. Please call SetupRouter() before starting the server.")
+	}
+
+	if a.redisClient == nil {
+		panic("Redis client is not initialized. Please call NewApp() to initialize the Redis client.")
+	}
+
+	if a.ctx == nil {
+		panic("Context is not initialized. Please call NewApp() to initialize the context.")
+	}
+
+	port, err := strconv.ParseUint(os.Getenv("GO_PORT"), 10, 16)
 	if err != nil {
-		return fmt.Errorf("🔴 Failed to load Redis: %w", err)
+		port = 9000
 	}
 
-	defer func() {
-		a.redisClient.Close()
-		log.Print("🔴 Redis client closed")
-	}()
-
-	port := os.Getenv("XLOGGER_PORT")
-	if port == "" {
-		port = "9000"
-	}
-
-	// HTTP server
 	server := http.Server{
-		Addr:    ":" + port,
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: a.router,
 	}
 
-	ch := make(chan error, 1)
-
 	go func() {
-		log.Printf("🟢 Server is listening on port %s", port)
-		ch <- server.ListenAndServe()
+		log.Printf("⚡️ Starting server on port %d...", port)
+		a.chanErr <- server.ListenAndServe()
 	}()
 
-	// Log server
-	logServer := logic.NewLogsService(a.ctx)
-	logServer.StartServer(a.config, a.redisClient)
-
 	select {
-	case err := <-ch:
-		return err
-
+	case err := <-a.chanErr:
+		return fmt.Errorf("🔴 %s HTTP server error: %v", os.Getenv("SERVICE_NAME"), err)
 	case <-a.ctx.Done():
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		return server.Shutdown(timeoutCtx)
+
+		a.redisClient.Close()
+		shutdownErr := server.Shutdown(timeoutCtx)
+
+		// close(a.chanErr)
+
+		return errors.Join(fmt.Errorf("🔴 Shutting down %s HTTP server...", os.Getenv("SERVICE_NAME")), shutdownErr, a.ctx.Err())
 	}
 }
 
-func NewApp(ctx context.Context, config *models.ServerConfig) *App {
-	redisAddr := os.Getenv("REDIS_ADDR")
+func (a *App) GetRedisClient() *redis.Client {
+	return a.redisClient
+}
 
-	if redisAddr == "" {
-		redisAddr = "localhost:6379"
-	}
+func NewApp(ctx context.Context) models.AppInterface {
+	redisClient := backend.NewRedisBackend()
 
 	app := &App{
-		ctx:    ctx,
-		config: config,
-		redisClient: redis.NewClient(&redis.Options{
-			Addr:     redisAddr,
-			Username: "",
-			Password: "",
-			DB:       0,
-		}),
+		ctx:         nil,
+		parentCtx:   ctx,
+		router:      nil,
+		chanErr:     make(chan error),
+		redisClient: redisClient,
 	}
+
 	app.loadRoutes()
+
 	return app
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Zadigo/goxlogger/internal/models"
+	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -48,7 +48,7 @@ func (f *FileRedis) GetFile(name string) (File, error) {
 }
 
 // ReadFile reads the content of a log file and returns it as a slice of strings
-func (f *FileRedis) ReadFile(path string, serverConfig *models.ServerConfig) ([]string, error) {
+func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerConfig) ([]string, error) {
 	file, err := os.Open(path)
 
 	var logs []string = make([]string, 0)
@@ -83,14 +83,14 @@ func (f *FileRedis) GetLogs(name string) (lines []LogLine, err error) {
 	var logs []LogLine
 	for _, log := range cmd.Val() {
 		line := LogLine{RawLine: log}
-		// When a line cannot be parsed, 
+		// When a line cannot be parsed,
 		// we skip it and continue with the next line
 		_, err := line.ParseLine()
 
 		if err != nil {
 			continue
 		}
-		
+
 		logs = append(logs, line)
 	}
 

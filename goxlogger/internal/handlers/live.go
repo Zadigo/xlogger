@@ -8,14 +8,24 @@ import (
 
 	"github.com/Zadigo/goxlogger/internal/logic"
 	"github.com/Zadigo/goxlogger/internal/models"
+	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
 type BaseRouteHandlers struct {
 	ctx          context.Context
+	app          models.AppInterface
 	rootDir      string
 	redisClient  *redis.Client
-	serverConfig *models.ServerConfig
+	serverConfig *utils.ServerConfig
+}
+
+func (h *BaseRouteHandlers) SetContext(ctx context.Context) {
+	h.ctx = ctx
+}
+
+func (h *BaseRouteHandlers) SetApp(app models.AppInterface) {
+	h.app = app
 }
 
 func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request) {
@@ -106,13 +116,4 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 	// Optional: signal the client that the stream is done
 	fmt.Fprintf(w, "event: done\ndata: {}\n\n")
 	flusher.Flush()
-}
-
-func NewBaseRouteHandlers(ctx context.Context, rootDir string, redisClient *redis.Client, serverConfig *models.ServerConfig) *BaseRouteHandlers {
-	return &BaseRouteHandlers{
-		ctx:          ctx,
-		rootDir:      rootDir,
-		redisClient:  redisClient,
-		serverConfig: serverConfig,
-	}
 }

@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Zadigo/goxlogger/internal/models"
+	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/go-co-op/gocron"
 	"github.com/redis/go-redis/v9"
 )
@@ -20,14 +20,14 @@ type Logs struct {
 	debugMode bool
 }
 
-func (l *Logs) StartServer(serverConfig *models.ServerConfig, redisClient *redis.Client) {
+func (l *Logs) StartServer(serverConfig *utils.ServerConfig, redisClient *redis.Client) {
 	l.isStarted.Store(true)
-	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.YamlConfig.LogServer.Interval)
+	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.LogServer.Interval)
 
 	ch := make(chan error, 1)
 
 	go func() {
-		_, err := l.scheduler.Cron(serverConfig.YamlConfig.LogServer.Interval).Do(func() {
+		_, err := l.scheduler.Cron(serverConfig.LogServer.Interval).Do(func() {
 			logFileAnalyzer(l.ctx, ch, serverConfig, redisClient)
 		})
 
