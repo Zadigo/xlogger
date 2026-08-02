@@ -47,6 +47,31 @@ func (f *FileRedis) GetFile(name string) (File, error) {
 	return File{Name: name, Path: cmd.Val()}, nil
 }
 
+// ReadFile reads the content of a log file and returns it as a slice of strings
+func (f *FileRedis) ReadFile(path string, serverConfig *models.ServerConfig) ([]string, error) {
+	file, err := os.Open(path)
+
+	var logs []string = make([]string, 0)
+	if err != nil {
+		log.Fatal("❌ Could not open file")
+		return logs, err
+	}
+
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		logs = append(logs, line)
+	}
+
+	return logs, nil
+}
+
+func (f *FileRedis) DeleteFile() error {
+	return nil
+}
+
 // GetLogs retrieves the cached logs for a specific file from Redis
 // and returns them as a slice of LogLine structs
 func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
@@ -68,7 +93,24 @@ func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
 	return logs, nil
 }
 
-func (f *FileRedis) DeleteFile() error {
+// CacheLogs caches the content of a log file in Redis using a list with the file name as the key
+func (f *FileRedis) CacheLogs(fileName string, content []string) error {
+	values := make([]any, len(content))
+	for i, l := range content {
+		values[i] = l
+	}
+
+	name := fmt.Sprintf("go-xlogger:%s", fileName)
+	err := f.redisClient.RPush(f.ctx, name, values...).Err()
+	if err != nil {
+		return err
+	}
+
+	err = f.redisClient.Expire(f.ctx, name, 15*time.Minute).Err()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -112,47 +154,6 @@ func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {
 		return nil
 	})
 	return files, err
-}
-
-// ReadFile reads the content of a log file and returns it as a slice of strings
-func (f *FileRedis) ReadFile(path string, serverConfig *models.ServerConfig) ([]string, error) {
-	file, err := os.Open(path)
-
-	var logs []string = make([]string, 0)
-	if err != nil {
-		log.Fatal("❌ Could not open file")
-		return logs, err
-	}
-
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		logs = append(logs, line)
-	}
-
-	return logs, nil
-}
-
-// CacheContent reads the content of a log file and caches it in Redis
-func (f *FileRedis) CacheContent(fileName string, content []string) error {
-	values := make([]any, len(content))
-	for i, l := range content {
-		values[i] = l
-	}
-
-	name := fmt.Sprintf("go-xlogger:%s", fileName)
-	err := f.redisClient.RPush(f.ctx, name, values...).Err()
-	if err != nil {
-		return err
-	}
-
-	err = f.redisClient.Expire(f.ctx, name, 15*time.Minute).Err()
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func NewFileRedis(ctx context.Context, redisClient *redis.Client) *FileRedis {

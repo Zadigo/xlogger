@@ -30,7 +30,7 @@ func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *models.
 			continue
 		}
 
-		if err = fileRedis.CacheContent(logFile.Name, logs); err != nil {
+		if err = fileRedis.CacheLogs(logFile.Name, logs); err != nil {
 			log.Printf("🔴 Could not cache content for file %s: %s\n", logFile.Name, err)
 			continue
 		}

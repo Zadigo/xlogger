@@ -73,6 +73,20 @@ func TestReadFile(t *testing.T) {
 	})
 }
 
+func TestCacheContent(t *testing.T) {
+	fileRedis := instanceFixture()
+
+	t.Run("should cache content", func(t *testing.T) {
+		content := []string{"line1", "line2", "line3"}
+		err := fileRedis.CacheLogs("example1.log", content)
+		assert.Nil(t, err)
+
+		// cachedContent, err := fileRedis.GetLogs("example1.log")
+		// assert.Nil(t, err)
+		// assert.Equal(t, content, cachedContent)
+	})
+}
+
 func TestImplementation(t *testing.T) {
 	ctx := context.WithValue(t.Context(), "rootDir", "../")
 
@@ -103,7 +117,7 @@ func TestImplementation(t *testing.T) {
 	})
 
 	t.Run("Should cache content", func(t *testing.T) {
-		err := filesRedis.CacheContent("example1.log", []string{"line1", "line2"})
+		err := filesRedis.CacheLogs("example1.log", []string{"line1", "line2"})
 		assert.Nil(t, err)
 	})
 }
