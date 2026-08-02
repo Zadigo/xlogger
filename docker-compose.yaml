@@ -1,6 +1,6 @@
 services:
   xlogger:
-    build: ./goxlogger
+    build: ./services/goxlogger
     container_name: xlogger-app
     environment:
       - XLOGGER_PORT=9000
