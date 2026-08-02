@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/Zadigo/goxlogger/internal/models"
@@ -11,16 +10,10 @@ import (
 )
 
 type BaseRouteHandlers struct {
-	ctx          context.Context
 	app          models.AppInterface
 	rootDir      string
 	redisClient  *redis.Client
 	serverConfig *utils.ServerConfig
-}
-
-// Deprecated: Set the context for the handler by using SetApp
-func (h *BaseRouteHandlers) SetContext(ctx context.Context) {
-	h.ctx = ctx
 }
 
 func (h *BaseRouteHandlers) SetApp(app models.AppInterface) {
@@ -39,7 +32,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 	middleware := WebsocketMiddleware{}
 	middleware.Handle(conn)
 
-	tickerapp.NewFileRedis(h.ctx, h.redisClient)
+	tickerapp.NewFileRedis(h.app.GetAppContext(), h.redisClient)
 
 	for {
 		var message any
@@ -52,7 +45,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
-	filesRedis := tickerapp.NewFileRedis(h.ctx, h.redisClient)
+	filesRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.redisClient)
 	files, err := filesRedis.GetFiles()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,7 +56,7 @@ func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
-	logsRedis := tickerapp.NewLogsRedis(h.ctx, h.redisClient)
+	logsRedis := tickerapp.NewLogsRedis(h.app.GetAppContext(), h.redisClient)
 	logs, err := logsRedis.GetLogs()
 
 	if err != nil {

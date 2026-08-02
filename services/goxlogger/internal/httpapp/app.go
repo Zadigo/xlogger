@@ -76,6 +76,10 @@ func (a *App) GetRedisClient() *redis.Client {
 	return a.redisClient
 }
 
+func (a *App) GetAppContext() context.Context {
+	return a.ctx
+}
+
 func NewApp(ctx context.Context) models.AppInterface {
 	redisClient := backend.NewRedisBackend(ctx)
 

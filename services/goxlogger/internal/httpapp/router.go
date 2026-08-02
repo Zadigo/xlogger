@@ -23,13 +23,12 @@ func (a *App) loadRoutes() {
 	a.router.Use(middlewares.JsonHeartbeat("/health"))
 	a.router.Use(middleware.Timeout(60 * time.Second))
 
-	a.router.Route("/files", a.loadBaseRoutes)
+	a.router.Route("/v1/files", a.loadBaseRoutes)
 }
 
 func (a *App) loadBaseRoutes(router chi.Router) {
 	baseHandlers := &handlers.BaseRouteHandlers{}
 
-	baseHandlers.SetContext(a.ctx)
 	baseHandlers.SetApp(a)
 
 	router.Use(middlewares.TodoMiddleware)

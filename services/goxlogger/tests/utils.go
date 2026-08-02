@@ -29,7 +29,6 @@ func CreateGetFilesRecorder(t *testing.T) *httptest.ResponseRecorder {
 
 	handlers := handlers.BaseRouteHandlers{}
 	handlers.SetApp(app)
-	handlers.SetContext(ctx)
 
 	return GenericRecorder(t, "GET", "/files", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetFiles(w, r)
