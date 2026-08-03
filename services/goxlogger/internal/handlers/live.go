@@ -3,23 +3,20 @@ package handlers
 import (
 	"encoding/base64"
 	"net/http"
+	"path"
 
 	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/Zadigo/goxlogger/internal/tickerapp"
 	"github.com/Zadigo/goxlogger/internal/utils"
-	"github.com/redis/go-redis/v9"
 )
 
 type BaseRouteHandlers struct {
 	app          models.AppInterface
-	rootDir      string
-	redisClient  *redis.Client
 	serverConfig *utils.ServerConfig
 }
 
 func (h *BaseRouteHandlers) SetApp(app models.AppInterface) {
 	h.app = app
-	h.redisClient = app.GetRedisClient()
 }
 
 func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +30,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 	middleware := WebsocketMiddleware{}
 	middleware.Handle(conn)
 
-	tickerapp.NewFileRedis(h.app.GetAppContext(), h.redisClient)
+	tickerapp.NewFileRedis(h.app.GetAppContext(), h.app.GetRedisClient())
 
 	for {
 		var message any
@@ -46,7 +43,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
-	filesRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.redisClient)
+	filesRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.app.GetRedisClient())
 	files, err := filesRedis.GetFiles()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -66,27 +63,29 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decodedFileName, err := base64.StdEncoding.DecodeString(fileId)
-	if  err != nil {
+	if err != nil {
 		httpErrors.InvalidFileId(w)
 		return
 	}
 
-	fileRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.redisClient)
+	fileRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.app.GetRedisClient())
 
-	var logs []tickerapp.LogLine
+	var logs []*tickerapp.LogLine
 
 	// Check if the cached data for the file exists in Redis
 	result := fileRedis.HasCachedData(string(decodedFileName))
 	if !result {
-		strLogs, err := fileRedis.ReadFile(string(decodedFileName), h.serverConfig)
+		fullPath := path.Join(h.app.GetRootDir(), "data", string(decodedFileName))
+		strLogs, err := fileRedis.ReadFile(fullPath, h.serverConfig)
 		if err != nil {
 			httpErrors.FailedToReadFile(w)
 			return
 		}
 
-		logRedis := tickerapp.NewLogsRedis(h.app.GetAppContext(), h.redisClient)
-		if logs, err = logRedis.SaveTransform(strLogs); err != nil {
-			httpErrors.FailedToReadFile(w)
+		logRedis := tickerapp.NewLogsRedis(h.app.GetAppContext(), h.app.GetRedisClient())
+		logs, err = logRedis.SaveTransform(strLogs)
+		if err != nil {
+			httpErrors.FailedToReadFile(w, err)
 			return
 		}
 	} else {

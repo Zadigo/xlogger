@@ -10,4 +10,5 @@ type AppInterface interface {
 	Start() error
 	GetRedisClient() *redis.Client
 	GetAppContext() context.Context
+	GetRootDir() string
 }

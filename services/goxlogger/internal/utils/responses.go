@@ -14,13 +14,17 @@ type DefaultErrorResponse struct {
 }
 
 func (d *DefaultErrorResponse) LogErrorMessage(err ...error) {
-	log.Print(errors.Join(err...).Error())
+	if len(err) > 0 {
+		log.Print(errors.Join(err...).Error())
+	}
 }
 
-func (a *DefaultErrorResponse) SendErrorMessage(w http.ResponseWriter, err ...error) {
-	// strErrors := errors.Join(err...).Error()
-	// a.Message = a.Message + " " + strErrors
-	JsonResponse(w, a, http.StatusInternalServerError)
+func (d *DefaultErrorResponse) SendErrorMessage(w http.ResponseWriter, err ...error) {
+	if len(err) > 0 {
+		strErrors := errors.Join(err...).Error()
+		d.Message = d.Message + " " + strErrors
+	}
+	JsonResponse(w, d, http.StatusInternalServerError)
 }
 
 // JsonResponse is a helper function to send JSON responses with a given status code.

@@ -19,21 +19,23 @@ type LogRedis struct {
 }
 
 // Transform transforms the given string logs into LogLine structs
-func (l *LogRedis) Transform(strLogs []string) []LogLine {
-	var logLines []LogLine
+func (l *LogRedis) Transform(strLogs []string) []*LogLine {
+	var logLines []*LogLine
+
 	for _, strLog := range strLogs {
-		instance := LogLine{RawLine: strLog}
-		line, err := instance.ParseLine()
+		instance := &LogLine{RawLine: strLog}
+		_, err := instance.ParseLine()
 
 		if err != nil {
-			logLines = append(logLines, line)
+			logLines = append(logLines, instance)
 		}
 	}
+
 	return logLines
 }
 
 // SaveTransform transforms the given string logs into LogLine structs and saves them in Redis
-func (l *LogRedis) SaveTransform(strLines []string) (lines []LogLine, err error) {
+func (l *LogRedis) SaveTransform(strLines []string) (lines []*LogLine, err error) {
 	var values []any
 
 	logLines := l.Transform(strLines)
@@ -51,21 +53,21 @@ func (l *LogRedis) SaveTransform(strLines []string) (lines []LogLine, err error)
 }
 
 // Deprecated: use files_redis.go
-func (l *LogRedis) GetLogs() ([]LogLine, error) {
+func (l *LogRedis) GetLogs() error {
 	cmd := l.redisClient.SMembers(l.ctx, l.Key)
 	if cmd.Err() != nil {
-		return nil, cmd.Err()
+		return cmd.Err()
 	}
 
 	var logLines []LogLine
 	for _, data := range cmd.Val() {
 		var logLine LogLine
 		if err := json.Unmarshal([]byte(data), &logLine); err != nil {
-			return nil, err
+			return err
 		}
 		logLines = append(logLines, logLine)
 	}
-	return logLines, nil
+	return nil
 }
 
 // Deprecated: use files_redis.go

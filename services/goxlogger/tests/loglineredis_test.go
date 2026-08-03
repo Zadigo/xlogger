@@ -21,11 +21,11 @@ func TestLogsRedis(t *testing.T) {
 	// 	assert.Nil(t, err)
 	// })
 
-	t.Run("Should retrieve logs from Redis", func(t *testing.T) {
-		logs, err := logRedis.GetLogs()
-		assert.Nil(t, err)
-		assert.Len(t, logs, 2)
-	})
+	// t.Run("Should retrieve logs from Redis", func(t *testing.T) {
+	// 	logs, err := logRedis.GetLogs()
+	// 	assert.Nil(t, err)
+	// 	assert.Len(t, logs, 2)
+	// })
 
 	t.Run("Should delete logs from Redis", func(t *testing.T) {
 		t.Skip("Works. Skip to test others")

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -77,6 +78,29 @@ func (a *App) GetRedisClient() *redis.Client {
 
 func (a *App) GetAppContext() context.Context {
 	return a.ctx
+}
+
+func (a *App) GetRootDir() string {
+	strRootDir := a.ctx.Value("rootDir")
+	if strRootDir == nil {
+		log.Fatal("❌ Root directory is not set in the context")
+	}
+	rootDir, ok := strRootDir.(string)
+	if !ok {
+		log.Fatal("❌ Root directory in context is not a string")
+	}
+
+	if rootDir == "" {
+		log.Fatal("❌ Root directory is empty")
+	}
+
+	absRootDir, err := filepath.Abs(rootDir)
+	if err != nil {
+		log.Fatalf("❌ Failed to get absolute path of root directory: %v", err)
+
+	}
+
+	return absRootDir
 }
 
 func NewApp(ctx context.Context) models.AppInterface {
