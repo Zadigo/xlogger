@@ -31,7 +31,7 @@ func CreateGetFilesRecorder(t *testing.T) *httptest.ResponseRecorder {
 	handlers.SetApp(app)
 
 	return GenericRecorder(t, "GET", "/v1/files", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetFiles(w, r)
+		handlers.GetFilesHandler(w, r)
 	})
 }
 
@@ -46,7 +46,7 @@ func CreateGetLogsRecorder(t *testing.T) *httptest.ResponseRecorder {
 	mux := http.NewServeMux()
 
 	// 2. Register the route pattern matching your production routing
-	mux.HandleFunc("GET /v1/files/{filename}", handlers.GetLogs)
+	mux.HandleFunc("GET /v1/files/{filename}", handlers.GetLogsHandler)
 
 	// 3. Create the recorder and the request pointing to the specific asset
 	w := httptest.NewRecorder()

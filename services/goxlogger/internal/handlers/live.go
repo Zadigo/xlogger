@@ -42,7 +42,7 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
+func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Request) {
 	httpErrors := HttpErrors{}
 
 	filesRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.app.GetRedisClient())
@@ -71,7 +71,7 @@ func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
 	utils.JsonResponse(w, files, http.StatusOK)
 }
 
-func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
+func (h *BaseRouteHandlers) GetLogsHandler(w http.ResponseWriter, r *http.Request) {
 	httpErrors := HttpErrors{}
 
 	fileId := r.Context().Value("fileId").(string)

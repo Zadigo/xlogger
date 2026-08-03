@@ -30,13 +30,12 @@ func (a *App) loadRoutes() {
 
 func (a *App) loadBaseRoutes(r chi.Router) {
 	baseHandlers := &handlers.BaseRouteHandlers{}
-
 	baseHandlers.SetApp(a)
 
-	r.Get("/", baseHandlers.GetFiles)
+	r.Get("/", baseHandlers.GetFilesHandler)
 
 	r.Route("/{fileId}", func(r chi.Router) {
-		r.Use(middlewares.FileIdMiddleware)
-		r.Get("/", baseHandlers.GetLogs)
+		r.Use(middlewares.UrlParamMiddleware("fileId"))
+		r.Get("/", baseHandlers.GetLogsHandler)
 	})
 }
