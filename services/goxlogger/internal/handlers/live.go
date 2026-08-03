@@ -54,6 +54,17 @@ func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
+	// limit := r.URL.Query().Get("limit")
+	// offset := r.URL.Query().Get("offset")
+
+	// if limit == "" {
+	// 	limit = "100"
+	// }
+
+	// if offset == "" {
+	// 	offset = "0"
+	// }
+
 	httpErrors := HttpErrors{}
 
 	fileId := r.Context().Value("fileId").(string)
@@ -93,6 +104,33 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 			httpErrors.FailedToGetLogs(w)
 			return
 		}
+	}
+
+	// Apply limit and offset to the logs
+	// limitInt, err := strconv.Atoi(limit)
+	// if err != nil {
+	// 	httpErrors.InvalidLimitOffset(w, err)
+	// 	return
+	// }
+
+	// offsetInt, err := strconv.Atoi(offset)
+	// if err != nil {
+	// 	httpErrors.InvalidLimitOffset(w, err)
+	// 	return
+	// }
+
+	// if offsetInt < 0 || limitInt < 0 {
+	// 	httpErrors.InvalidLimitOffset(w)
+	// 	return
+	// }
+
+	// endIndex := min(offsetInt + limitInt, len(logs))
+	// logs = logs[offsetInt:endIndex]
+
+	logs, err = PaginateData(r, logs)
+	if err != nil {
+		httpErrors.InvalidLimitOffset(w, err)
+		return
 	}
 
 	utils.JsonResponse(w, logs, http.StatusOK)

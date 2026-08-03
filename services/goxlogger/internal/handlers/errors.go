@@ -30,8 +30,14 @@ func (a *HttpErrors) FailedToGetLogs(w http.ResponseWriter, err ...error) {
 }
 
 func (a *HttpErrors) FailedToReadFile(w http.ResponseWriter, err ...error) {
-	a.Detail = "Failed to retrieve files from the server."
-	a.Message = "Failed to get files."
+	a.Detail = "Failed to read the specified file from the server."
+	a.Message = "Failed to read file."
+	a.SendErrorMessage(w, err...)
+}
+
+func (a *HttpErrors) InvalidLimitOffset(w http.ResponseWriter, err... error) {
+	a.Detail = "The provided limit or offset is invalid."
+	a.Message = "Invalid limit or offset."
 	a.SendErrorMessage(w, err...)
 }
 
