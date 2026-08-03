@@ -38,7 +38,6 @@ func JsonResponse[T any](w http.ResponseWriter, data T, statusCode int) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(statusCode)
 
 	// Response is already committed at this point; a write failure here

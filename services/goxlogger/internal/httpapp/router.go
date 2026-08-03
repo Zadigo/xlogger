@@ -12,6 +12,7 @@ import (
 func (a *App) loadRoutes() {
 	a.router = chi.NewRouter()
 
+	a.router.Use(middlewares.SecurityHeaders)
 	a.router.Use(middleware.RequestID)
 	a.router.Use(middleware.RealIP)
 	a.router.Use(middlewares.Cors)
