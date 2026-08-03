@@ -12,14 +12,14 @@ func TestLogsRedis(t *testing.T) {
 	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	logRedis := tickerapp.NewLogsRedis(t.Context(), redisClient)
 
-	t.Run("Should save logs to Redis", func(t *testing.T) {
-		logLines := []tickerapp.LogLine{
-			{RawLine: "Log line 1"},
-			{RawLine: "Log line 2"},
-		}
-		err := logRedis.SaveLogs(logLines)
-		assert.Nil(t, err)
-	})
+	// t.Run("Should save logs to Redis", func(t *testing.T) {
+	// 	logLines := []tickerapp.LogLine{
+	// 		{RawLine: "Log line 1"},
+	// 		{RawLine: "Log line 2"},
+	// 	}
+	// 	err := logRedis.SaveLogs(logLines)
+	// 	assert.Nil(t, err)
+	// })
 
 	t.Run("Should retrieve logs from Redis", func(t *testing.T) {
 		logs, err := logRedis.GetLogs()

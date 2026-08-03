@@ -66,17 +66,34 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decodedFileName, err := base64.StdEncoding.DecodeString(fileId)
-	if err != nil {
+	if  err != nil {
 		httpErrors.InvalidFileId(w)
 		return
 	}
 
 	fileRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.redisClient)
-	logs, err := fileRedis.GetLogs(string(decodedFileName))
 
-	if err != nil {
-		httpErrors.FailedToGetLogs(w)
-		return
+	var logs []tickerapp.LogLine
+
+	// Check if the cached data for the file exists in Redis
+	result := fileRedis.HasCachedData(string(decodedFileName))
+	if !result {
+		strLogs, err := fileRedis.ReadFile(string(decodedFileName), h.serverConfig)
+		if err != nil {
+			httpErrors.FailedToReadFile(w)
+			return
+		}
+
+		logRedis := tickerapp.NewLogsRedis(h.app.GetAppContext(), h.redisClient)
+		if logs, err = logRedis.SaveTransform(strLogs); err != nil {
+			httpErrors.FailedToReadFile(w)
+			return
+		}
+	} else {
+		if logs, err = fileRedis.GetLogs(string(decodedFileName)); err != nil {
+			httpErrors.FailedToGetLogs(w)
+			return
+		}
 	}
 
 	utils.JsonResponse(w, logs, http.StatusOK)

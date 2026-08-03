@@ -18,17 +18,12 @@ import (
 
 type App struct {
 	ctx         context.Context
-	parentCtx   context.Context
 	router      *chi.Mux
 	chanErr     chan error
 	redisClient *redis.Client
 }
 
 func (a *App) Start() error {
-	var cancel context.CancelFunc
-	a.ctx, cancel = context.WithCancel(a.parentCtx)
-	defer cancel()
-
 	if a.router == nil {
 		panic("Router is not initialized. Please call SetupRouter() before starting the server.")
 	}
@@ -40,6 +35,10 @@ func (a *App) Start() error {
 	if a.ctx == nil {
 		panic("Context is not initialized. Please call NewApp() to initialize the context.")
 	}
+
+	var cancel context.CancelFunc
+	a.ctx, cancel = context.WithCancel(a.ctx)
+	defer cancel()
 
 	port, err := strconv.ParseUint(os.Getenv("GO_PORT"), 10, 16)
 	if err != nil {
@@ -81,11 +80,14 @@ func (a *App) GetAppContext() context.Context {
 }
 
 func NewApp(ctx context.Context) models.AppInterface {
+	if ctx == nil {
+		log.Fatal("❌ Context is nil")
+	}
+
 	redisClient := backend.NewRedisBackend(ctx)
 
 	app := &App{
-		ctx:         nil,
-		parentCtx:   ctx,
+		ctx:         ctx,
 		router:      nil,
 		chanErr:     make(chan error),
 		redisClient: redisClient,

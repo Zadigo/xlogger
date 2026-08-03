@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// LogRedis contains all the logic to save, 
+// LogRedis contains all the logic to save,
 // retrieve and manage logs in Redis
 type LogRedis struct {
 	ctx         context.Context
@@ -18,19 +18,39 @@ type LogRedis struct {
 	Key         string
 }
 
-func (l *LogRedis) SaveLogs(logLines []LogLine) error {
-	var values []any
-	for _, logLine := range logLines {
-		data, err := json.Marshal(logLine)
+// Transform transforms the given string logs into LogLine structs
+func (l *LogRedis) Transform(strLogs []string) []LogLine {
+	var logLines []LogLine
+	for _, strLog := range strLogs {
+		instance := LogLine{RawLine: strLog}
+		line, err := instance.ParseLine()
+
 		if err != nil {
-			return err
+			logLines = append(logLines, line)
 		}
-		values = append(values, data)
 	}
-	cmd := l.redisClient.SAdd(l.ctx, l.Key, values...)
-	return cmd.Err()
+	return logLines
 }
 
+// SaveTransform transforms the given string logs into LogLine structs and saves them in Redis
+func (l *LogRedis) SaveTransform(strLines []string) (lines []LogLine, err error) {
+	var values []any
+
+	logLines := l.Transform(strLines)
+
+	for _, logLine := range logLines {
+		if data, err := json.Marshal(logLine); err == nil {
+			values = append(values, data)
+		} else {
+			return nil, err
+		}
+	}
+
+	cmd := l.redisClient.SAdd(l.ctx, l.Key, values...)
+	return logLines, cmd.Err()
+}
+
+// Deprecated: use files_redis.go
 func (l *LogRedis) GetLogs() ([]LogLine, error) {
 	cmd := l.redisClient.SMembers(l.ctx, l.Key)
 	if cmd.Err() != nil {
@@ -48,17 +68,20 @@ func (l *LogRedis) GetLogs() ([]LogLine, error) {
 	return logLines, nil
 }
 
+// Deprecated: use files_redis.go
 func (l *LogRedis) DeleteLogs() error {
 	cmd := l.redisClient.Del(l.ctx, l.Key)
 	return cmd.Err()
 }
 
+// Deprecated: use files_redis.go
 func (l *LogRedis) BroadcastLog(logLine LogLine) {
 	l.mu.Lock()
 	l.broadcastCh <- logLine
 	l.mu.Unlock()
 }
 
+// Deprecated: use files_redis.go
 func (l *LogRedis) StartBroadcaster() <-chan error {
 	ch := make(chan error, 1)
 

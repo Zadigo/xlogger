@@ -83,6 +83,7 @@ func (f *FileRedis) GetLogs(name string) (lines []LogLine, err error) {
 	var logs []LogLine
 	for _, log := range cmd.Val() {
 		line := LogLine{RawLine: log}
+
 		// When a line cannot be parsed,
 		// we skip it and continue with the next line
 		_, err := line.ParseLine()
@@ -95,6 +96,16 @@ func (f *FileRedis) GetLogs(name string) (lines []LogLine, err error) {
 	}
 
 	return logs, nil
+}
+
+// HasCached checks if the cached data for a specific file exists in Redis
+func (f *FileRedis) HasCachedData(name string) bool {
+	cmd := f.redisClient.Exists(f.ctx, fmt.Sprintf("go-xlogger:%s", name))
+	if cmd.Err() != nil {
+		return false
+	}
+
+	return cmd.Val() > 0
 }
 
 // CacheLogs caches the content of a log file in Redis using a list with the file name as the key
@@ -175,7 +186,20 @@ func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {
 }
 
 func NewFileRedis(ctx context.Context, redisClient *redis.Client) *FileRedis {
-	rootDir := ctx.Value("rootDir").(string)
+	if ctx == nil {
+		log.Fatal("❌ Context is nil")
+	}
+
+	if redisClient == nil {
+		log.Fatal("❌ Redis client is nil")
+	}
+
+	rootDirValue := ctx.Value("rootDir")
+	if rootDirValue == nil {
+		log.Fatal("❌ rootDir is not set in context")
+	}
+
+	rootDir := rootDirValue.(string)
 
 	return &FileRedis{
 		ctx:         ctx,
