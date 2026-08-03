@@ -17,6 +17,7 @@ func (a *App) loadRoutes() {
 	a.router.Use(middleware.RealIP)
 	a.router.Use(middlewares.Cors)
 	a.router.Use(middlewares.Authorization)
+	a.router.Use(middlewares.RateLimitLogin)
 	a.router.Use(middleware.AllowContentType("application/json"))
 	a.router.Use(middleware.Throttle(1000))
 	a.router.Use(middleware.Logger)

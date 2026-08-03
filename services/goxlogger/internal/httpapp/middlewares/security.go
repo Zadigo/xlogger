@@ -3,9 +3,15 @@ package middlewares
 import (
 	"log"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/Zadigo/goxlogger/internal/utils"
+	"golang.org/x/time/rate"
 )
+
+// Per-IP rate limiter
+var loginLimiters = sync.Map{}
 
 // CORS middleware to handle cross-origin requests
 func Cors(next http.Handler) http.Handler {
@@ -53,6 +59,28 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Create a rate limiter for login attempts per IP address
+func getLoginLimiter(ip string) *rate.Limiter {
+	if limiter, ok := loginLimiters.Load(ip); ok {
+		return limiter.(*rate.Limiter)
+	}
+	limiter := rate.NewLimiter(rate.Every(time.Minute/5), 5) // 5 requests per minute
+	loginLimiters.Store(ip, limiter)
+	return limiter
+}
+
+// RateLimitLogin middleware to limit login attempts per IP address
+func RateLimitLogin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := r.RemoteAddr
+		if !getLoginLimiter(ip).Allow() {
+			http.Error(w, "too many login attempts", http.StatusTooManyRequests)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }
