@@ -82,18 +82,18 @@ type LogLine struct {
 
 // Checks the value of the status code and returns
 // if it was successful or not
-func (l LogLine) analyzeStatusCode(status int) bool {
+func (l *LogLine) analyzeStatusCode(status int) bool {
 	return status >= 200 && status <= 226
 }
 
 // Parses a line of the log file and returns a LogLine struct
-func (l LogLine) ParseLine() (line LogLine, err error) {
+func (l *LogLine) ParseLine() (line *LogLine, err error) {
 	// For ^(\S+) - (\S+) \[(.*)\] "(POST|GET|OPTIONS|PATCH|PUT) (.*) (HTTP\/[0-9\.]+)" (\d{3}) (\d+) "(\S+)" "(\S+)" (\d+) "(\S+)" "(\S+)" (\d+)ms$
 	logLineRegex := regexp.MustCompile(`^(\S+) - (\S+) \[([^\]]+)\] "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH) ([^"]+) (HTTP\/[0-9\.]+)" (\d{3}) (\d+) "([^"]*)" "([^"]*)"$`)
 
 	var matched []string = logLineRegex.FindStringSubmatch(l.RawLine)
 	if matched == nil {
-		return LogLine{}, fmt.Errorf("🔴 Line is not valid %s", l.RawLine)
+		return &LogLine{}, fmt.Errorf("🔴 Line is not valid %s", l.RawLine)
 	}
 
 	status, _ := strconv.Atoi(matched[7])
@@ -106,9 +106,9 @@ func (l LogLine) ParseLine() (line LogLine, err error) {
 	l.Path = matched[5]
 	l.Protocole = matched[6]
 	l.StatusCode = status
-	l.Referrer = matched[8]
-	l.UserAgent = matched[9]
-	l.BodyBytesSent, _ = strconv.Atoi(matched[7])
+	l.Referrer = matched[9]
+	l.UserAgent = matched[10]
+	l.BodyBytesSent, _ = strconv.Atoi(matched[8])
 
 	// Date parsing
 	dateLayout := "02/Jan/2006:15:04:05 -0700"

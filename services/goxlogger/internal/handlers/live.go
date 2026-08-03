@@ -70,7 +70,7 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 
 	fileRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.app.GetRedisClient())
 
-	var logs []*tickerapp.LogLine
+	var logs []tickerapp.LogLine
 
 	// Check if the cached data for the file exists in Redis
 	result := fileRedis.HasCachedData(string(decodedFileName))

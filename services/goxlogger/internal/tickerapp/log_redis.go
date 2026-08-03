@@ -19,14 +19,14 @@ type LogRedis struct {
 }
 
 // Transform transforms the given string logs into LogLine structs
-func (l *LogRedis) Transform(strLogs []string) []*LogLine {
-	var logLines []*LogLine
+func (l *LogRedis) Transform(strLogs []string) []LogLine {
+	var logLines []LogLine
 
 	for _, strLog := range strLogs {
-		instance := &LogLine{RawLine: strLog}
+		instance := LogLine{RawLine: strLog}
 		_, err := instance.ParseLine()
 
-		if err != nil {
+		if err == nil {
 			logLines = append(logLines, instance)
 		}
 	}
@@ -35,7 +35,7 @@ func (l *LogRedis) Transform(strLogs []string) []*LogLine {
 }
 
 // SaveTransform transforms the given string logs into LogLine structs and saves them in Redis
-func (l *LogRedis) SaveTransform(strLines []string) (lines []*LogLine, err error) {
+func (l *LogRedis) SaveTransform(strLines []string) (lines []LogLine, err error) {
 	var values []any
 
 	logLines := l.Transform(strLines)
