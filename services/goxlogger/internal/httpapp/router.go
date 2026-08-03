@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Zadigo/goxlogger/internal/handlers"
+	"github.com/Zadigo/goxlogger/internal/handlers/jwt"
 	"github.com/Zadigo/goxlogger/internal/httpapp/middlewares"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -38,4 +39,12 @@ func (a *App) loadBaseRoutes(r chi.Router) {
 		r.Use(middlewares.UrlParamMiddleware("fileId"))
 		r.Get("/", baseHandlers.GetLogsHandler)
 	})
+}
+
+func (a *App) loadAuthRoutes(r chi.Router) {
+	authHandlers := &jwt.JwtHandler{}
+	authHandlers.SetApp(a)
+
+	r.Post("/login", authHandlers.LoginHandler)
+	// r.Post("/refresh", authHandlers.)
 }

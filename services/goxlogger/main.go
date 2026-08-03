@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/Zadigo/goxlogger/internal/httpapp"
 	"github.com/Zadigo/goxlogger/internal/utils"
@@ -21,7 +22,7 @@ func main() {
 		panic(err)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	ctx = context.WithValue(ctx, "rootDir", rootDir)

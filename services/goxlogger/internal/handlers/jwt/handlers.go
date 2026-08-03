@@ -5,11 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type JwtHandler struct{}
+type JwtHandler struct {
+	models.BaseHandler
+}
 
 // Issue tokens after successful login
 func (j *JwtHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,8 +52,8 @@ func (j *JwtHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
-		MaxAge:   7 * 24 * 60 * 60,
-		Path:     "/auth/refresh",
+		MaxAge:   7 * 24 * 60 * 60, // 7 days
+		Path:     "/auth/refresh",  // Set the path to the refresh endpoint
 	})
 
 	w.Header().Set("Content-Type", "application/json")
