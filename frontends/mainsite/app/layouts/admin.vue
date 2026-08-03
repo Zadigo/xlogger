@@ -32,17 +32,37 @@ const items: NavigationMenuItem[] = [
   {
     label: 'Home',
     to: '/logfiles',
-    icon: 'i-lucide-house',
-    active: true
+    icon: 'i-lucide-house'
+    // active: true
   },
   {
-    label: 'Inbox',
+    label: 'Notifications',
+    to: '/notifications',
     icon: 'i-lucide-inbox',
-    badge: '4'
+    disabled: true,
+    badge: '0'
   },
   {
-    label: 'Contacts',
-    icon: 'i-lucide-users'
+    label: 'Settings',
+    icon: 'i-lucide-users',
+    children: [
+      {
+        label: 'Passwords',
+        to: '/settings/passwords',
+        icon: 'i-lucide-lock'
+      },
+      {
+        label: 'Applications',
+        to: '/settings/applications',
+        icon: 'i-lucide-smartphone'
+      }
+    ]
+  },
+  {
+    label: 'Documentation',
+    href: 'https://xlogger.dev/docs',
+    icon: 'i-lucide-book-open',
+    target: '_blank'
   }
 ]
 </script>

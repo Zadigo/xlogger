@@ -31,5 +31,21 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+
+  fonts: {
+    families: [
+      {
+        name: 'Epunda Slab'
+      }, 
+      {
+        name: 'Epunda Sans'
+      }
+    ]
+  },
+
+  app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
+    layoutTransition: { name: 'layout', mode: 'out-in' }
   }
 })
