@@ -20,9 +20,9 @@ func instanceFixture() *tickerapp.FileRedis {
 	return filesRedis
 }
 
-func TestGetLocalLogs(t *testing.T) {
+func TestCollectFilesInFolder(t *testing.T) {
 	filesRedis := instanceFixture()
-	files, err := filesRedis.GetLocalLogs("/data")
+	files, err := filesRedis.CollectFilesInFolder("/data")
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, files)
@@ -99,7 +99,7 @@ func TestImplementation(t *testing.T) {
 	filesRedis := tickerapp.NewFileRedis(ctx, redisClient)
 
 	t.Run("Should load files", func(t *testing.T) {
-		files, err := filesRedis.GetLocalLogs("/data")
+		files, err := filesRedis.CollectFilesInFolder("/data")
 		assert.Nil(t, err)
 		assert.NotEmpty(t, files)
 		assert.NoError(t, err)
@@ -107,7 +107,7 @@ func TestImplementation(t *testing.T) {
 	})
 
 	t.Run("Should save files", func(t *testing.T) {
-		files, _ := filesRedis.GetLocalLogs("/data")
+		files, _ := filesRedis.CollectFilesInFolder("/data")
 		err := filesRedis.SaveFiles(files)
 		assert.Nil(t, err)
 	})

@@ -155,17 +155,18 @@ func (f *FileRedis) GetFiles() ([]File, error) {
 	return files, nil
 }
 
-// GetLocalLogs retrieves all the log files in the root directory
+// CollectFilesInFolder retrieves all the log files in the root directory
 // and returns them as a slice of File structs
-func (f *FileRedis) GetLocalLogs(path string) ([]File, error) {
+func (f *FileRedis) CollectFilesInFolder(path string) ([]File, error) {
 	var files []File
+
 	trimmedPath := strings.TrimSuffix(path, "/")
 
 	if trimmedPath == "" {
 		trimmedPath = "data"
 	}
 
-	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", trimmedPath))
+	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", path))
 	if err != nil {
 		return nil, err
 	}

@@ -20,7 +20,7 @@ const metaDataSchema = zod.object({
   isWordPress: zod.boolean(),
   isEnv: zod.boolean(),
   isExecutable: zod.boolean(),
-  isPowerShell: zod.boolean(),
+  isPowershell: zod.boolean(),
   isNuxt: zod.boolean(),
   isGponRouter: zod.boolean(),
   isWindowsPath: zod.boolean(),
@@ -28,9 +28,9 @@ const metaDataSchema = zod.object({
 })
 
 const LogFileContetntSchema = zod.object({
-  rawLine: zod.string(),
+  rawline: zod.string(),
   remoteAddress: zod.string(),
-  dateTime: zod.string(),
+  datetime: zod.string(),
   method: zod.string(),
   path: zod.string(),
   protocole: zod.string(),
@@ -45,3 +45,11 @@ const LogFileContetntSchema = zod.object({
 
 
 export type LogFileContent = zod.infer<typeof LogFileContetntSchema>
+
+export type PaginatedResponse<T> = {
+  limit: number
+  offset: number
+  total: number
+  pages: number
+  results: T[]
+}

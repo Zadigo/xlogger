@@ -41,6 +41,12 @@ func (a *HttpErrors) InvalidLimitOffset(w http.ResponseWriter, err... error) {
 	a.SendErrorMessage(w, err...)
 }
 
+func (a *HttpErrors) FailedToCollectFiles(w http.ResponseWriter, err ...error) {
+	a.Detail = "Failed to retrieve files from the server."
+	a.Message = "Failed to get files."
+	a.SendErrorMessage(w, err...)
+}
+
 func NewErrorHandler() models.ErrorInterface {
 	return &HttpErrors{}
 }

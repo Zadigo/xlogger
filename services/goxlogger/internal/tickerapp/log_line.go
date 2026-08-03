@@ -14,46 +14,46 @@ import (
 // be useful for further vulnerability analysis.
 type MetaData struct {
 	// IsPHP indicates if the request is for a PHP file or contains "php" in the path
-	IsPHP bool `json:"is_php"`
+	IsPHP bool `json:"isPhp"`
 	// IsAssets indicates if the request is for a static asset (e.g., .css, .js, .png)
-	IsAssets bool `json:"is_assets"`
+	IsAssets bool `json:"isAssets"`
 	// IsJS indicates if the request is for a JavaScript file
-	IsJS bool `json:"is_js"`
+	IsJS bool `json:"isJs"`
 	// IsHTTP2 indicates if the request was made using the HTTP/2 protocol
-	IsHTTP2 bool `json:"is_http2"`
+	IsHTTP2 bool `json:"isHttp2"`
 	// IsRobotsTxt indicates if the request is for the robots.txt file
-	IsRobotsTxt bool `json:"is_robots_txt"`
+	IsRobotsTxt bool `json:"isRobotsTxt"`
 	// IsXml indicates if the request is for an XML file
-	IsXml bool `json:"is_xml"`
+	IsXml bool `json:"isXml"`
 	// IsAttemptedLogin indicates if the request is an attempted login
 	// based on the presence of "login" in the path or user agent
-	IsAttemptedLogin bool `json:"is_attempted_login"`
+	IsAttemptedLogin bool `json:"isAttemptedLogin"`
 	// IsWordpress indicates if the request is related to a WordPress site
-	IsWordpress bool `json:"is_wordpress"`
+	IsWordpress bool `json:"isWordpress"`
 	// IsEnv indicates if the request is for an environment file
-	IsEnv bool `json:"is_env"`
+	IsEnv bool `json:"isEnv"`
 	// IsExecutable indicates if the request is for an executable file
-	IsExecutable bool `json:"is_executable"`
+	IsExecutable bool `json:"isExecutable"`
 	// IsPowerShell indicates if the request is for a PowerShell script
-	IsPowerShell bool `json:"is_powershell"`
+	IsPowerShell bool `json:"isPowershell"`
 	// IsNuxt indicates if the request is related to a Nuxt.js application
-	IsNuxt bool `json:"is_nuxt"`
+	IsNuxt bool `json:"isNuxt"`
 	// IsGponRouter indicates if the request is related to a GPON router
-	IsGponRouter bool `json:"is_gpon_router"`
+	IsGponRouter bool `json:"isGponRouter"`
 	// IsWindows indicates the request tried to access a Windows path (e.g., contains backslashes)
-	IsWindowsPath bool `json:"is_windows"`
+	IsWindowsPath bool `json:"isWindows"`
 	// IsGitHub indicates if the request is related to GitHub (e.g., contains ".git" in the path or user agent)
-	IsGitHub bool `json:"is_github"`
+	IsGitHub bool `json:"isGithub"`
 }
 
 type LogLine struct {
-	RawLine string `json:"raw_line"`
+	RawLine string `json:"rawline"`
 	// The IP address of the client
-	RemoteAddress string `json:"remote_address"`
+	RemoteAddress string `json:"remoteAddress"`
 	// The authenticated user
-	RemoteUser string `json:"remote_user"`
+	RemoteUser string `json:"remoteUser"`
 	// Date and time at which the request was made + TZ
-	DateTime string `json:"date_time"`
+	DateTime string `json:"datetime"`
 	// Method used for the request
 	Method string `json:"method"`
 	// The path of the request
@@ -61,23 +61,23 @@ type LogLine struct {
 	// The HTTP protocole used e.g HTTP/2.0
 	Protocole string `json:"protocole"`
 	// The request status code
-	StatusCode int `json:"status_code"`
+	StatusCode int `json:"statusCode"`
 	// Number of bytes sent to the client (body only, not headers)
-	BodyBytesSent int `json:"body_bytes_sent"`
+	BodyBytesSent int `json:"bodyBytesSent"`
 	// The page from which the user came
 	Referrer string `json:"referrer"`
 	// The client's user agent
 	UserAgent string `json:"user_agent"`
 	// The date part of the date time
-	RemoteDate string `json:"remote_date"`
+	RemoteDate string `json:"remoteDate"`
 	// the time part of the date time
-	RemoteTime string `json:"remote_time"`
+	RemoteTime string `json:"remoteTime"`
 	// Whether the request was successful
-	IsSuccess bool `json:"is_success"`
+	IsSuccess bool `json:"isSuccess"`
 	// MetaData contains various boolean fields that indicate specific
 	// characteristics of the path of the request which can be useful
 	// for further vulnerability analysis.
-	MetaData MetaData `json:"meta_data"`
+	MetaData MetaData `json:"metaData"`
 }
 
 // Checks the value of the status code and returns

@@ -43,28 +43,35 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *BaseRouteHandlers) GetFiles(w http.ResponseWriter, r *http.Request) {
+	httpErrors := HttpErrors{}
+
 	filesRedis := tickerapp.NewFileRedis(h.app.GetAppContext(), h.app.GetRedisClient())
 	files, err := filesRedis.GetFiles()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httpErrors.FailedToCollectFiles(w, err)
 		return
+	}
+
+	if len(files) == 0 {
+		files, err = filesRedis.CollectFilesInFolder("/data")
+		if err != nil {
+			httpErrors.FailedToCollectFiles(w, err)
+			return
+		}
+
+		filesRedis.SaveFiles(files)
+	}
+
+	if len(files) == 0 {
+		// If no files are found at all, return an empty 
+		// array instead of null
+		files = []tickerapp.File{}
 	}
 
 	utils.JsonResponse(w, files, http.StatusOK)
 }
 
 func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
-	// limit := r.URL.Query().Get("limit")
-	// offset := r.URL.Query().Get("offset")
-
-	// if limit == "" {
-	// 	limit = "100"
-	// }
-
-	// if offset == "" {
-	// 	offset = "0"
-	// }
-
 	httpErrors := HttpErrors{}
 
 	fileId := r.Context().Value("fileId").(string)
@@ -105,27 +112,6 @@ func (h *BaseRouteHandlers) GetLogs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	// Apply limit and offset to the logs
-	// limitInt, err := strconv.Atoi(limit)
-	// if err != nil {
-	// 	httpErrors.InvalidLimitOffset(w, err)
-	// 	return
-	// }
-
-	// offsetInt, err := strconv.Atoi(offset)
-	// if err != nil {
-	// 	httpErrors.InvalidLimitOffset(w, err)
-	// 	return
-	// }
-
-	// if offsetInt < 0 || limitInt < 0 {
-	// 	httpErrors.InvalidLimitOffset(w)
-	// 	return
-	// }
-
-	// endIndex := min(offsetInt + limitInt, len(logs))
-	// logs = logs[offsetInt:endIndex]
 
 	logs, err = PaginateData(r, logs)
 	if err != nil {

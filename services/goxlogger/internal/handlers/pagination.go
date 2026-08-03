@@ -14,12 +14,21 @@ type PaginationResponseTemplate[T []any] struct {
 	Results T `json:"results"`
 }
 
+// GetPaginationResponse constructs a PaginationResponseTemplate with the provided data, limit, and offset.
 func GetPaginationResponse[T []any](data T, limit, offset int) PaginationResponseTemplate[T] {
+	var totalPages int
+
+	if len(data) > 0 && limit > 0 {
+		totalPages = (len(data) + limit - 1) / limit // Calculate total pages
+	} else {
+		totalPages = 0
+	}
+
 	return PaginationResponseTemplate[T]{
 		Limit:   limit,
 		Offset:  offset,
 		Total:   len(data),
-		Pages:   (limit + offset) / limit,
+		Pages:   totalPages,
 		Results: data,
 	}
 }

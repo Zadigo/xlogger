@@ -72,17 +72,17 @@ export function useLogsTable<T extends LogFileContent = LogFileContent>(data: Ma
         })
     },
     {
-      accessorKey: 'raw_line',
+      accessorKey: 'rawline',
       header: 'Raw Line',
       cell: ({ row }) => {
-        return row.getValue('raw_line')
+        return row.getValue('rawline')
       }
     },
     {
-      accessorKey: 'remote_address',
+      accessorKey: 'remoteAddress',
       header: 'IP Address',
       cell: ({ row }) => {
-        return row.getValue('remote_address')
+        return row.getValue('remoteAddress')
       }
     },
     {
@@ -102,10 +102,10 @@ export function useLogsTable<T extends LogFileContent = LogFileContent>(data: Ma
       }
     },
     {
-      accessorKey: 'date_time',
+      accessorKey: 'datetime',
       header: 'Date Time',
       cell: ({ row }) => {
-        return row.getValue('date_time')
+        return row.getValue('datetime')
       }
     },
     {
@@ -123,23 +123,23 @@ export function useLogsTable<T extends LogFileContent = LogFileContent>(data: Ma
       }
     },
     {
-      accessorKey: 'is_success',
+      accessorKey: 'isSuccess',
       header: 'Success',
       cell: ({ row }) => {
-        const color: ButtonProps['color'] = row.getValue('is_success') === true ? 'success' : 'error'
+        const color: ButtonProps['color'] = row.getValue('isSuccess') === true ? 'success' : 'error'
         return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
-          row.getValue('is_success') ? 'Success' : 'Failure'
+          row.getValue('isSuccess') ? 'Success' : 'Failure'
         )
       }
     },
   ]
 
   const columnVisibility = ref<Partial<Record<keyof T, boolean>>>({
-    raw_line: false,
-    user_agent: false,
-    body_bytes_sent: false,
+    rawline: false,
+    userAgent: false,
+    bodyBytesSent: false,
     referrer: false,
-    meta_data: false,
+    metaData: false,
   })
 
   return {
