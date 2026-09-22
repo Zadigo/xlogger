@@ -22,6 +22,7 @@ type LogsApp struct {
 
 func (l *LogsApp) Start(serverConfig *utils.ServerConfig, redisClient *redis.Client) {
 	l.isStarted.Store(true)
+	
 	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.LogServer.Interval)
 
 	ch := make(chan error, 1)
