@@ -40,25 +40,5 @@ func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *utils.S
 			ch <- fmt.Errorf("🔴 Could not transform logs for file %s: %w", logFile.Name, err)
 			continue
 		}
-
-		// logLines := make([]LogLine, 0, len(strLogs))
-
-		// for _, value := range strLogs {
-		// 	logLine := LogLine{RawLine: value}
-		// 	result, err := logLine.ParseLine()
-
-		// 	if err != nil {
-		// 		select {
-		// 		case ch <- err:
-		// 		default:
-		// 			log.Printf("🔴 Parse error (channel full): %s\n", err)
-		// 		}
-		// 	}
-
-		// 	logLines = append(logLines, result)
-		// }
-
-		// logsRedis := NewLogsRedis(ctx, redisClient)
-		// logsRedis.SaveLogs(logLines)
 	}
 }

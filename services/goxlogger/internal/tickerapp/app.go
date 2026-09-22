@@ -12,7 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type Logs struct {
+type LogsApp struct {
 	ctx       context.Context
 	rootDir   string
 	scheduler *gocron.Scheduler
@@ -20,7 +20,7 @@ type Logs struct {
 	debugMode bool
 }
 
-func (l *Logs) StartServer(serverConfig *utils.ServerConfig, redisClient *redis.Client) {
+func (l *LogsApp) Start(serverConfig *utils.ServerConfig, redisClient *redis.Client) {
 	l.isStarted.Store(true)
 	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.LogServer.Interval)
 
@@ -53,11 +53,11 @@ func (l *Logs) StartServer(serverConfig *utils.ServerConfig, redisClient *redis.
 	}
 }
 
-func NewLogsService(ctx context.Context) *Logs {
+func NewLogsApp(ctx context.Context) *LogsApp {
 	rootDir := ctx.Value("rootDir").(string)
 	debugMode := ctx.Value("debugMode").(bool)
 
-	return &Logs{
+	return &LogsApp{
 		ctx:       ctx,
 		rootDir:   rootDir,
 		scheduler: gocron.NewScheduler(time.UTC),

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/Zadigo/goxlogger/internal/httpapp"
+	"github.com/Zadigo/goxlogger/internal/mainapp"
 	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/joho/godotenv"
 )
@@ -31,10 +31,13 @@ func main() {
 	config := &utils.ServerConfig{}
 	config.Load(ctx)
 
-	app := httpapp.NewApp(ctx)
-	err = app.Start()
+	// app := httpapp.NewApp(ctx)
+	// err = app.Start()
 
-	if err != nil {
-		panic(err)
-	}
+	app := mainapp.NewMainServerApp(ctx, config)
+	app.Start()
+
+	// if err != nil {
+	// 	panic(err)
+	// }
 }

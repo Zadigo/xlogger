@@ -53,7 +53,7 @@ func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerConfig) ([]s
 
 	var logs []string = make([]string, 0)
 	if err != nil {
-		log.Fatal("❌ Could not open file")
+		log.Printf("❌ Could not open file: %s", err)
 		return logs, err
 	}
 
@@ -63,6 +63,10 @@ func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerConfig) ([]s
 	for scanner.Scan() {
 		line := scanner.Text()
 		logs = append(logs, line)
+	}
+	
+	if err := scanner.Err(); err != nil {
+		return logs, err
 	}
 
 	return logs, nil
