@@ -50,7 +50,7 @@ func (m *MainServerApp) Start() {
 	tickerServer := tickerapp.NewLogsApp(m.ctx)
 
 	go func() {
-		tickerServer.Start(m.config, m.redisDb)
+		tickerServer.Start(m)
 	}()
 
 	<- m.ctx.Done()

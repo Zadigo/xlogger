@@ -23,3 +23,10 @@ type MainServerInterface interface {
 	GetConfig() *utils.ServerConfig
 	GetRedisDb() *redis.Client
 }
+
+type AppInterface interface {
+	Start() error
+	GetRedisClient() *redis.Client
+	GetAppContext() context.Context
+	GetRootDir() string
+}
