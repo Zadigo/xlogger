@@ -19,6 +19,9 @@ func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *utils.S
 		return
 	}
 
+	// Check the number of log files locally and those registered in Redis,
+	// if the number defers, add the missing files to Redis
+
 	fileRedis.SaveFiles(logFiles)
 
 	log.Printf("📁 Found %d log files\n", len(logFiles))

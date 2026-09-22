@@ -42,7 +42,7 @@ func (l *LogsApp) Start(server models.MainServerInterface) {
 	for {
 		select {
 		case err := <-ch:
-			log.Printf("🔴 Log server error: %s\n", err)
+			log.Printf("🔴 Log server error: %s", err)
 		case <-l.ctx.Done():
 			l.scheduler.Stop()
 			l.isStarted.Store(false)

@@ -190,6 +190,10 @@ func (f *FileRedis) CollectFilesInFolder(path string) ([]File, error) {
 	return files, err
 }
 
+func (f *FileRedis) NumberOfFilesInFolder() int {
+	return 0
+}
+
 func NewFileRedis(ctx context.Context, redisClient *redis.Client) *FileRedis {
 	if ctx == nil {
 		log.Fatal("❌ Context is nil")
