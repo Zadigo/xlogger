@@ -2,7 +2,6 @@ package tickerapp
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +22,10 @@ func (fc *FileCollector) fileFromString(path string) File {
 	return file
 }
 
+func (fc *FileCollector) NumberOfFilesInFolder() int {
+	return len(fc.Files)
+}
+
 // CollectFilesInFolder retrieves all the log files in the root directory
 // and returns them as a slice of File structs
 func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]File, error) {
@@ -34,14 +37,14 @@ func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]File, err
 		trimmedPath = "data"
 	}
 
-	fullpath, err := filepath.Abs(fmt.Sprintf("%s/%s", rootDir, path))
+	fullpath, err := filepath.Abs(fmt.Sprintf("%s/%s", rootDir, trimmedPath))
 	if err != nil {
 		return nil, err
 	}
 
 	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
 		if filepath.Ext(path) != ".log" {
-			log.Printf("⚠️ Skipping file %s:", path)
+			// log.Printf("⚠️ Skipping file %s:", path)
 			return nil
 		}
 
