@@ -1,31 +1,69 @@
 $kind: http-request
-url: "{{golang}}v1/files/{{fileId}}?limit=10&offset=0"
+url: "{{golang}}v1/files/{{fileId}}?limit=10&offset=0&search=asset"
 method: GET
 queryParams:
   - key: limit
     value: "10"
     disabled: false
     description: ""
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "default": "100",
+            "minimum": "0",
+            "maximum": "100"
+          }
+        }
+      }
   - key: offset
     value: "0"
     disabled: false
     description: ""
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": "0",
+            "maximum": "100",
+            "default": "100"
+          }
+        }
+      }
   - key: endDate
     value: null
     disabled: true
     description: ""
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
   - key: methods
-    value: POST
+    value: GET
     disabled: true
     description: ""
-  - key: search
-    value: asset
-    disabled: true
-    description: ""
-  - key: status
-    value: null
-    disabled: true
-    description: ""
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "enum": [],
+            "default": "GET",
+            "pattern": "[GET|POST|PATCH|PUT\\,]+"
+          }
+        }
+      }
   - key: successful
     value: "1"
     disabled: true
@@ -34,4 +72,33 @@ queryParams:
     value: 2026-05-08
     disabled: true
     description: ""
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+  - key: status
+    value: "404"
+    disabled: true
+    description: ""
+    $type: |-
+      {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "pattern": "[\\d{3}\\,]+"
+          }
+        }
+      }
+  - key: search
+    value: asset
+    disabled: false
+    description: ""
+    $type: string
 order: 2763421359313748

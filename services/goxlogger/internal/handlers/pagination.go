@@ -60,6 +60,14 @@ func PaginateData[T any](r *http.Request, data []T) ([]T, error) {
 		return data, errors.New("invalid limit or offset")
 	}
 
+	if limitInt > 100 {
+		limitInt = 100
+	}
+
+	if offsetInt > len(data) {
+		offsetInt = len(data)
+	}
+
 	endIndex := min(offsetInt+limitInt, len(data))
 	return data[offsetInt:endIndex], nil
 }

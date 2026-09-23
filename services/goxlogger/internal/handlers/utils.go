@@ -37,7 +37,7 @@ type logFilter struct {
 	endDate    *time.Time
 	methods    map[string]struct{}
 	search     string
-	status     *int
+	status     map[int]struct{}
 	successful bool
 	needsDate  bool
 }
@@ -78,11 +78,15 @@ func newLogFilter(r *http.Request) (*logFilter, error) {
 	}
  
 	if v := q.Get("status"); v != "" {
-		status, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, fmt.Errorf("invalid status %q: %w", v, err)
+		status := strings.Split(v, ",")
+		f.status = make(map[int]struct{})
+		for _, s := range status {
+			code, err := strconv.Atoi(strings.TrimSpace(s))
+			if err != nil {
+				return nil, fmt.Errorf("invalid status %q: %w", s, err)
+			}
+			f.status[code] = struct{}{}
 		}
-		f.status = &status
 	}
  
 	return f, nil
@@ -106,8 +110,10 @@ func (f *logFilter) matches(log tickerapp.LogLine, logDateTime time.Time) bool {
 	if f.search != "" && !strings.Contains(log.Path, f.search) {
 		return false
 	}
-	if f.status != nil && log.StatusCode != *f.status {
-		return false
+	if f.status != nil {
+		if _, ok := f.status[log.StatusCode]; !ok {
+			return false
+		}
 	}
 	if f.successful && (log.StatusCode < 200 || log.StatusCode >= 300) {
 		return false
@@ -117,14 +123,14 @@ func (f *logFilter) matches(log tickerapp.LogLine, logDateTime time.Time) bool {
  
 // resolveQuery filters logs against every query parameter in a single pass,
 // parsing each log's DateTime at most once and only when actually needed.
-func resolveQuery(r *http.Request, logs []tickerapp.LogLine) ([]tickerapp.LogLine, error) {
+func resolveQuery(r *http.Request, logLines []tickerapp.LogLine) ([]tickerapp.LogLine, error) {
 	f, err := newLogFilter(r)
 	if err != nil {
 		return nil, err
 	}
  
-	filtered := make([]tickerapp.LogLine, 0, len(logs))
-	for _, log := range logs {
+	filtered := make([]tickerapp.LogLine, 0, len(logLines))
+	for _, log := range logLines {
 		var logDateTime time.Time
 		if f.needsDate {
 			logDateTime, err = time.Parse(tickerapp.DateLayout, log.DateTime)
