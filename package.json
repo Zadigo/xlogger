@@ -1,0 +1,8 @@
+{
+    "name": "@xlogger/project",
+    "scripts": {
+        "dev": "pnpm --parallel --filter 'frontends/*' dev",
+        "dev:mainsite": "pnpm --filter mainsite run dev",
+        "add:mainsite": "pnpm --filter mainsite run add"
+    }
+}
