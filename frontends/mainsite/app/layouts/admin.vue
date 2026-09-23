@@ -23,8 +23,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem, SidebarProps } from '@nuxt/ui'
 
-defineProps<Pick<SidebarProps, 'variant' | 'collapsible' | 'side'>>()
-
 const open = ref<boolean>(true)
 const toggleOpen = useToggle(open)
 

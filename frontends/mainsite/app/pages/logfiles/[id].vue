@@ -5,16 +5,20 @@
         <h1 class="text-lg font-semibold">Log Files</h1>
       </template>
 
-      <div>
-        <u-input :model-value="table?.tableApi?.getColumn('title')?.getFilterValue() as string" class="max-w-sm" placeholder="Filter files..." @update:model-value="table?.tableApi?.getColumn('title')?.setFilterValue($event)" />
-        <u-button color="info" variant="soft">
-          <icon name="i-lucide-refresh-ccw" />
-        </u-button>
+      <div class="flex items-center justify-between gap-2 py-5">
+        <div class="flex gap-2 items-center">
+          <u-input :model-value="table?.tableApi?.getColumn('rawline')?.getFilterValue() as string" class="max-w-sm" placeholder="Filter files..." @update:model-value="table?.tableApi?.getColumn('title')?.setFilterValue($event)" />
+          <u-button size="xl" color="info" variant="soft" @click="() => { refresh() }">
+            <icon name="i-lucide-refresh-ccw" />
+          </u-button>
+        </div>
 
         <u-dropdown-menu :items="dropdown()" :content="{ align: 'end' }">
           <u-button label="Columns" color="neutral" variant="outline" trailing-icon="i-lucide-chevron-down" />
         </u-dropdown-menu>
       </div>
+
+      <lazy-filtering-header :files="fileContents" />
 
       <u-table 
         ref="table" 
@@ -26,7 +30,19 @@
       >
         <template #expanded="{ row }">
           <u-card>
-            <pre>{{ row.getValue<LogFileContent['metaData']>('meta_data') }}</pre>
+            <div class="py-5 flex gap-2">
+              <u-badge :color="row.original.metaData.isPhp ? 'primary': 'neutral'" class="w-25 flex justify-center" icon="logos:php-alt" variant="subtle" label="PHP" />
+              <u-badge :color="row.original.metaData.isJs ? 'primary': 'neutral'" class="w-25 flex justify-center" icon="logos:javascript" variant="subtle" label="JavaScript" />
+              <u-badge :color="row.original.metaData.isEnv ? 'primary': 'neutral'" class="w-25 flex justify-center" variant="subtle" label="Env" />
+              <u-badge :color="row.original.metaData.isGitHub ? 'primary': 'neutral'" class="w-25 flex justify-center" icon="logos:github-icon" variant="subtle" label="GitHub" />
+              <u-badge :color="row.original.metaData.isNuxt ? 'primary': 'neutral'" class="w-25 flex justify-center" icon="logos:vue" variant="subtle" label="Nuxt" />
+              <u-badge :color="row.original.metaData.isPowershell ? 'primary': 'neutral'" class="w-25 flex justify-center" icon="logos:microsoft-icon" variant="subtle" label="Powershell" />
+            </div>
+
+            <p class="font-bold mb-5">JSON Data</p>
+            <pre class="whitespace-pre-wrap relative">
+              {{ row.original.metaData }}
+            </pre>
           </u-card>
         </template>
       </u-table>
@@ -64,14 +80,14 @@ const limitOffset = computed({
   }
 })
 
-const fileContents = computedAsync(async () => {
-  return await $fetch<LogFileContent[]>(`/api/files/${encodedName}`, {
-    method: 'GET',
-    query: {
-      limit: limitOffset.value.limit,
-      offset: limitOffset.value.offset
-    }
-  })
+const { data: fileContents, refresh } = useAsyncData<LogFileContent[]>('logfiles', () => $fetch<LogFileContent[]>(`/api/files/${encodedName}`, {
+  method: 'GET',
+  query: {
+    limit: limitOffset.value.limit,
+    offset: limitOffset.value.offset
+  }
+}), {
+  default: () => []
 })
 
 const hasLogs = computed(() => isDefined(fileContents) && fileContents.value.length > 0)
@@ -99,6 +115,12 @@ const hasLogs = computed(() => isDefined(fileContents) && fileContents.value.len
 //     }
 //   )
 // })
+
+/**
+ * Filtering
+ */
+
+useFilteringComposable()
 
 /**
  * Table
