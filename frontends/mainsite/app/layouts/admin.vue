@@ -63,4 +63,8 @@ const items: NavigationMenuItem[] = [
     target: '_blank'
   }
 ]
+
+const side = ref<'left' | 'right'>('left')
+const variant = ref<'floating' | 'inset'>('inset')
+const collapsible = ref<'none' | 'offcanvas'>('offcanvas')
 </script>
