@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -30,131 +31,110 @@ func IsWebsocketClose(err error) bool {
 	return false
 }
 
-const (
-	DirectionAfter = "after"
-	DirectionBefore = "before"
-)
-
-func queryDate(dateValue string, logs []tickerapp.LogLine, direction string) ([]tickerapp.LogLine, error) {
-	if dateValue == "" {
-		return logs, nil
+// logFilter holds parsed, validated query parameters for filtering logs.
+type logFilter struct {
+	startDate  *time.Time
+	endDate    *time.Time
+	methods    map[string]struct{}
+	search     string
+	status     *int
+	successful bool
+	needsDate  bool
+}
+ 
+// newLogFilter parses and validates all filter-related query parameters once,
+// up front, so bad input produces a real error instead of a silently empty result.
+func newLogFilter(r *http.Request) (*logFilter, error) {
+	q := r.URL.Query()
+	f := &logFilter{
+		search:     q.Get("search"),
+		successful: q.Get("successful") == "1",
 	}
-	
-	var filteredLogs []tickerapp.LogLine
-
-	date, err := time.Parse("2006-01-02", dateValue)
-	if err != nil {
-		return []tickerapp.LogLine{}, err
-	}
-
-	for _, log := range logs {
-		logDateTime, err := time.Parse(tickerapp.DateLayout, log.DateTime)
+ 
+	if v := q.Get("startDate"); v != "" {
+		d, err := time.Parse("2006-01-02", v)
 		if err != nil {
-			return []tickerapp.LogLine{}, err
+			return nil, fmt.Errorf("invalid startDate %q: %w", v, err)
 		}
-
-		switch direction {
-		case DirectionAfter:
-			if logDateTime.After(date) || logDateTime.Equal(date) {
-				filteredLogs = append(filteredLogs, log)
-			}
-		case DirectionBefore:
-			if logDateTime.Before(date) || logDateTime.Equal(date) {
-				filteredLogs = append(filteredLogs, log)
-			}
+		f.startDate = &d
+	}
+ 
+	if v := q.Get("endDate"); v != "" {
+		d, err := time.Parse("2006-01-02", v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid endDate %q: %w", v, err)
+		}
+		// Make the end date inclusive of the whole day, not just midnight.
+		d = d.Add(24*time.Hour - time.Nanosecond)
+		f.endDate = &d
+	}
+	f.needsDate = f.startDate != nil || f.endDate != nil
+ 
+	if v := q.Get("methods"); v != "" {
+		f.methods = make(map[string]struct{})
+		for value := range strings.SplitSeq(v, ",") {
+			f.methods[strings.ToUpper(strings.TrimSpace(value))] = struct{}{}
 		}
 	}
-	return filteredLogs, nil
+ 
+	if v := q.Get("status"); v != "" {
+		status, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid status %q: %w", v, err)
+		}
+		f.status = &status
+	}
+ 
+	return f, nil
 }
-
-func queryMethods(methods string, logs []tickerapp.LogLine) []tickerapp.LogLine {
-	if methods == "" {
-		return logs
+ 
+// matches reports whether a log line satisfies every active filter.
+// logDateTime is only used when a date filter is active; pass the zero
+// value when f.needsDate is false.
+func (f *logFilter) matches(log tickerapp.LogLine, logDateTime time.Time) bool {
+	if f.startDate != nil && logDateTime.Before(*f.startDate) {
+		return false
 	}
-
-	methodsList := strings.Split(methods, ",")
-	var filteredLogs []tickerapp.LogLine
-	for _, log := range logs {
-		for _, method := range methodsList {
-			if log.Method == method {
-				filteredLogs = append(filteredLogs, log)
-				break
-			}
+	if f.endDate != nil && logDateTime.After(*f.endDate) {
+		return false
+	}
+	if f.methods != nil {
+		if _, ok := f.methods[strings.ToUpper(log.Method)]; !ok {
+			return false
 		}
 	}
-	return filteredLogs
+	if f.search != "" && !strings.Contains(log.Path, f.search) {
+		return false
+	}
+	if f.status != nil && log.StatusCode != *f.status {
+		return false
+	}
+	if f.successful && (log.StatusCode < 200 || log.StatusCode >= 300) {
+		return false
+	}
+	return true
 }
-
-func querySearch(search string, logs []tickerapp.LogLine) []tickerapp.LogLine {
-	if search == "" {
-		return logs
-	}
-
-	var filteredLogs []tickerapp.LogLine
-	for _, log := range logs {
-		if strings.Contains(log.Path, search) {
-			filteredLogs = append(filteredLogs, log)
-		}
-	}
-	return filteredLogs
-}
-
-func queryStatus(status string, logs []tickerapp.LogLine) []tickerapp.LogLine {
-	if status == "" {
-		return logs
-	}
-
-	var filteredLogs []tickerapp.LogLine
-	for _, log := range logs {
-		if statusCode, err := strconv.Atoi(status); err == nil && log.StatusCode == statusCode {
-			filteredLogs = append(filteredLogs, log)
-		}
-	}
-	return filteredLogs
-}
-
-func querySuccessful(successful string, logs []tickerapp.LogLine) []tickerapp.LogLine {
-	if successful == "" || successful != "1" {
-		return logs
-	}
-
-	var filteredLogs []tickerapp.LogLine
-	for _, log := range logs {
-		if (log.StatusCode >= 200 && log.StatusCode < 300) {
-			filteredLogs = append(filteredLogs, log)
-		}
-	}
-	return filteredLogs
-}
-
+ 
+// resolveQuery filters logs against every query parameter in a single pass,
+// parsing each log's DateTime at most once and only when actually needed.
 func resolveQuery(r *http.Request, logs []tickerapp.LogLine) ([]tickerapp.LogLine, error) {
-	var err error
-
-	filteredLogs := logs
-
-	startDate := r.URL.Query().Get("startDate")
-	filteredLogs, err = queryDate(startDate, filteredLogs, DirectionAfter)
+	f, err := newLogFilter(r)
 	if err != nil {
-		return []tickerapp.LogLine{}, err
+		return nil, err
 	}
-
-	endDate := r.URL.Query().Get("endDate")
-	filteredLogs, err = queryDate(endDate, filteredLogs, DirectionBefore)
-	if err != nil {
-		return []tickerapp.LogLine{}, err
+ 
+	filtered := make([]tickerapp.LogLine, 0, len(logs))
+	for _, log := range logs {
+		var logDateTime time.Time
+		if f.needsDate {
+			logDateTime, err = time.Parse(tickerapp.DateLayout, log.DateTime)
+			if err != nil {
+				return nil, fmt.Errorf("invalid log DateTime %q: %w", log.DateTime, err)
+			}
+		}
+		if f.matches(log, logDateTime) {
+			filtered = append(filtered, log)
+		}
 	}
-
-	methods := r.URL.Query().Get("methods")
-	filteredLogs = queryMethods(methods, filteredLogs)
-	
-	search := r.URL.Query().Get("search")
-	filteredLogs = querySearch(search, filteredLogs)
-
-	status := r.URL.Query().Get("status")
-	filteredLogs = queryStatus(status, filteredLogs)
-
-	successfull := r.URL.Query().Get("successful")
-	filteredLogs = querySuccessful(successfull, filteredLogs)
-
-	return filteredLogs, nil
+	return filtered, nil
 }
