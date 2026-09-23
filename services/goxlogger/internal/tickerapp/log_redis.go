@@ -20,14 +20,14 @@ type LogRedis struct {
 
 // Transform transforms the given string logs into LogLine structs
 func (l *LogRedis) Transform(strLogs []string) []LogLine {
-	var logLines []LogLine
+	logLines := make([]LogLine, len(strLogs))
 
-	for _, strLog := range strLogs {
+	for i, strLog := range strLogs {
 		instance := LogLine{RawLine: strLog}
 		_, err := instance.ParseLine()
 
 		if err == nil {
-			logLines = append(logLines, instance)
+			logLines[i] = instance
 		}
 	}
 

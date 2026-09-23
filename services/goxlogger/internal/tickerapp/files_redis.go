@@ -171,9 +171,13 @@ func (f *FileRedis) GetCachedFiles() ([]models.File, error) {
 	return files, nil
 }
 
-func (f *FileRedis) NumberOfFilesInFolder() int {
-	return 0
-}
+// func (f *FileRedis) NumberOfFilesInFolder(name string) (int, error) {
+// 	vals, err := f.redisClient.LRange(f.ctx, logRedisKey(name), 0, -1).Result()
+// 	if err != nil {
+// 		return 0, fmt.Errorf("🔴 Fetching logs for %q: %w", name, err)
+// 	}
+// 	return len(vals), nil
+// }
 
 func NewFileRedis(ctx context.Context, redisClient *redis.Client) *FileRedis {
 	if ctx == nil {

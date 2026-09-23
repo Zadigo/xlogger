@@ -50,7 +50,6 @@ func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Reque
 		httpErrors.FailedToCollectFiles(w, err)
 		return
 	}
-
 	
 	if len(files) == 0 {
 		filesCollector := &tickerapp.FileCollector{}
@@ -89,7 +88,7 @@ func (h *BaseRouteHandlers) GetLogsHandler(w http.ResponseWriter, r *http.Reques
 
 	fileRedis := tickerapp.NewFileRedis(h.GetApp().GetAppContext(), h.GetApp().GetRedisClient())
 
-	var logs []tickerapp.LogLine
+	var cachedLogs []tickerapp.LogLine
 
 	// Check if the cached data for the file exists in Redis
 	result := fileRedis.HasCachedData(string(decodedFileName))
@@ -103,30 +102,30 @@ func (h *BaseRouteHandlers) GetLogsHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		logRedis := tickerapp.NewLogsRedis(h.GetApp().GetAppContext(), h.GetApp().GetRedisClient())
-		logs, err = logRedis.SaveTransform(strLogs)
+		cachedLogs, err = logRedis.SaveTransform(strLogs)
 		if err != nil {
 			httpErrors.FailedToReadFile(w, err)
 			return
 		}
 	} else {
-		if logs, err = fileRedis.GetLogs(string(decodedFileName)); err != nil {
+		if cachedLogs, err = fileRedis.GetLogs(string(decodedFileName)); err != nil {
 			httpErrors.FailedToGetLogs(w, err)
 			return
 		}
 	}
 
-	logs, err = resolveQuery(r, logs)
+	cachedLogs, err = resolveQuery(r, cachedLogs)
 	if err != nil {
 		httpErrors.FailedToGetLogs(w, err)
 		return
 	}
 
 	// Pagination
-	logs, err = PaginateData(r, logs)
+	cachedLogs, err = PaginateData(r, cachedLogs)
 	if err != nil {
 		httpErrors.InvalidLimitOffset(w, err)
 		return
 	}
 
-	utils.JsonResponse(w, logs, http.StatusOK)
+	utils.JsonResponse(w, cachedLogs, http.StatusOK)
 }
