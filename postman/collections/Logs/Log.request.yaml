@@ -1,9 +1,9 @@
 $kind: http-request
-url: "{{golang}}v1/files/{{fileId}}?limit=30&offset=0&search=asset&successful=1"
+url: "{{golang}}v1/files/{{fileId}}?limit=10&offset=0"
 method: GET
 queryParams:
   - key: limit
-    value: "30"
+    value: "10"
     disabled: false
     description: ""
   - key: offset
@@ -20,7 +20,7 @@ queryParams:
     description: ""
   - key: search
     value: asset
-    disabled: false
+    disabled: true
     description: ""
   - key: status
     value: null
@@ -28,7 +28,7 @@ queryParams:
     description: ""
   - key: successful
     value: "1"
-    disabled: false
+    disabled: true
     description: ""
   - key: startDate
     value: 2026-05-08

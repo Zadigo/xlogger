@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,12 @@ import (
 	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
+
+// logRedisKey returns the Redis key used to store log lines for a given name.
+// Centralized here so the write path and read path can't drift apart.
+func logRedisKey(name string) string {
+	return fmt.Sprintf("go-xlogger:%s", name)
+}
 
 type FileRedis struct {
 	Key         string `json:"key"`
@@ -71,36 +78,35 @@ func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerConfig) ([]s
 func (f *FileRedis) DeleteFile() error {
 	return nil
 }
-
-// GetLogs retrieves the cached logs for a specific file from Redis
-// and returns them as a slice of LogLine structs
-func (f *FileRedis) GetLogs(name string) (lines []LogLine, err error) {
-	cmd := f.redisClient.LRange(f.ctx, fmt.Sprintf("go-xlogger:%s", name), 0, -1)
-	if cmd.Err() != nil {
-		return nil, cmd.Err()
+ 
+// GetLogs returns the parsed log lines stored under name. Lines that fail
+// to parse are skipped and logged rather than silently dropped.
+func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
+	if name == "" {
+		return nil, errors.New("name cannot be empty")
 	}
-
-	var logs []LogLine
-	for _, log := range cmd.Val() {
-		line := LogLine{RawLine: log}
-
-		// When a line cannot be parsed,
-		// we skip it and continue with the next line
-		_, err := line.ParseLine()
-
-		if err != nil {
+ 
+	vals, err := f.redisClient.LRange(f.ctx, logRedisKey(name), 0, -1).Result()
+	if err != nil {
+		return nil, fmt.Errorf("🔴 Fetching logs for %q: %w", name, err)
+	}
+ 
+	logs := make([]LogLine, 0, len(vals))
+	for _, raw := range vals {
+		line := LogLine{RawLine: raw}
+		if _, err := line.ParseLine(); err != nil {
+			log.Printf("🔴 Skipping unparsable log line for %q: %v", name, err)
 			continue
 		}
-
 		logs = append(logs, line)
 	}
-
+ 
 	return logs, nil
 }
 
 // HasCached checks if the cached data for a specific file exists in Redis
 func (f *FileRedis) HasCachedData(name string) bool {
-	cmd := f.redisClient.Exists(f.ctx, fmt.Sprintf("go-xlogger:%s", name))
+	cmd := f.redisClient.Exists(f.ctx, logRedisKey(name), name)
 	if cmd.Err() != nil {
 		return false
 	}
@@ -115,7 +121,7 @@ func (f *FileRedis) CacheLogs(fileName string, content []string) error {
 		values[i] = l
 	}
 
-	name := fmt.Sprintf("go-xlogger:%s", fileName)
+	name := logRedisKey(fileName)
 	err := f.redisClient.RPush(f.ctx, name, values...).Err()
 	if err != nil {
 		return err
