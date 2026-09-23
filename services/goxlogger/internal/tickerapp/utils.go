@@ -6,19 +6,20 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/google/uuid"
 )
 
 
 type FileCollector struct {
-	Files []File
+	Files []models.File
 }
 
 // fileFromString creates a File struct from a given path and adds it to the Files slice
-func (fc *FileCollector) fileFromString(path string, info os.FileInfo) File {
+func (fc *FileCollector) fileFromString(path string, info os.FileInfo) models.File {
 	baseName := filepath.Base(path)
 
-	file := File{
+	file := models.File{
 		Uuid: uuid.NewString(),
 		Name: baseName,
 		Path: path,
@@ -36,8 +37,8 @@ func (fc *FileCollector) NumberOfFilesInFolder() int {
 
 // CollectFilesInFolder retrieves all the log files in the root directory
 // and returns them as a slice of File structs
-func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]File, error) {
-	var files []File
+func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]models.File, error) {
+	var files []models.File
 
 	trimmedPath := strings.TrimSuffix(path, "/")
 

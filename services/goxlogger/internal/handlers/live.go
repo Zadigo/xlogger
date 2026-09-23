@@ -52,7 +52,7 @@ func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Reque
 
 	
 	if len(files) == 0 {
-		filesCollector := tickerapp.FileCollector{}
+		filesCollector := &tickerapp.FileCollector{}
 		files, err = filesCollector.CollectFilesInFolder(h.GetApp().GetRootDir(), "/data")
 		if err != nil {
 			httpErrors.FailedToCollectFiles(w, err)
@@ -71,7 +71,7 @@ func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Reque
 	if len(files) == 0 {
 		// If no files are found at all, return an empty
 		// array instead of null
-		files = []tickerapp.File{}
+		files = []models.File{}
 	}
 
 	utils.JsonResponse(w, files, http.StatusOK)

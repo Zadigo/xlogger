@@ -12,19 +12,27 @@ import (
 func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *utils.ServerConfig, redisClient *redis.Client) {
 	fileRedis := NewFileRedis(ctx, redisClient)
 
-	logFiles, err := fileRedis.CollectFilesInFolder(serverConfig.LogServer.Logs.Folder)
+	// logFiles, err := fileRedis.CollectFilesInFolder(serverConfig.LogServer.Logs.Folder)
+	rootDir := ctx.Value("rootDir").(string)
+	if rootDir == "" {
+		ch <- fmt.Errorf("🔴 Root directory is not set in context")
+		return
+	}
 
+	fileCollector := FileCollector{}
+	logFiles, err := fileCollector.CollectFilesInFolder(rootDir, serverConfig.LogServer.Logs.Folder)
 	if err != nil {
 		ch <- fmt.Errorf("🔴 Could not get log files: %w", err)
 		return
 	}
+
 
 	// Check the number of log files locally and those registered in Redis,
 	// if the number defers, add the missing files to Redis
 
 	fileRedis.SaveFiles(logFiles)
 
-	log.Printf("📁 Found %d log files\n", len(logFiles))
+	log.Printf("📁 Found %d log files", len(logFiles))
 
 	for _, logFile := range logFiles {
 		strLogs, err := fileRedis.ReadFile(logFile.Path, serverConfig)

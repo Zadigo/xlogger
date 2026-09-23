@@ -3,51 +3,42 @@ package tickerapp
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
+	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
-// File represents a log file with its name and path
-type File struct {
-	Uuid string `json:"uuid"`
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Size int64 `json:"size"`
-	LastModified time.Time `json:"last_modified"`
-}
-
 type FileRedis struct {
 	Key         string `json:"key"`
-	Files       []File `json:"files"`
+	Files       []models.File `json:"files"`
 	ctx         context.Context
 	rootDir     string
 	redisClient *redis.Client
 }
 
 // Deprecated: fileFromString creates a File struct from a given path and adds it to the Files slice
-func (f *FileRedis) fileFromString(path string) File {
-	baseName := filepath.Base(path)
+// func (f *FileRedis) fileFromString(path string) File {
+// 	baseName := filepath.Base(path)
 
-	file := File{Name: baseName, Path: path}
-	f.Files = append(f.Files, file)
+// 	file := File{Name: baseName, Path: path}
+// 	f.Files = append(f.Files, file)
 
-	return file
-}
+// 	return file
+// }
 
 // GetFile retrieves a file from Redis by its name and returns it as a File struct
-func (f *FileRedis) GetFile(name string) (File, error) {
+func (f *FileRedis) GetFile(name string) (models.File, error) {
 	cmd := f.redisClient.HGet(f.ctx, f.Key, name)
 	if cmd.Err() != nil {
-		return File{}, cmd.Err()
+		return models.File{}, cmd.Err()
 	}
-	return File{Name: name, Path: cmd.Val()}, nil
+	return models.File{Name: name, Path: cmd.Val()}, nil
 }
 
 // ReadFile reads the content of a log file and returns it as a slice of strings
@@ -138,9 +129,14 @@ func (f *FileRedis) CacheLogs(fileName string, content []string) error {
 
 // SaveFiles saves the list of log files in Redis using a
 // hash with the file name as the key and the file path as the value
-func (f *FileRedis) SaveFiles(files []File) error {
+func (f *FileRedis) SaveFiles(files []models.File) error {
 	for _, file := range files {
-		cmd := f.redisClient.HSet(f.ctx, f.Key, file.Name, file.Path)
+		jsonData, err := json.Marshal(file)
+		if err != nil {
+			return err
+		}
+
+		cmd := f.redisClient.HSet(f.ctx, f.Key, file.Name, jsonData)
 		if err := cmd.Err(); err != nil {
 			return err
 		}
@@ -148,15 +144,18 @@ func (f *FileRedis) SaveFiles(files []File) error {
 	return nil
 }
 
-func (f *FileRedis) GetFiles() ([]File, error) {
+func (f *FileRedis) GetFiles() ([]models.File, error) {
 	cmd := f.redisClient.HGetAll(f.ctx, f.Key)
 	if cmd.Err() != nil {
 		return nil, cmd.Err()
 	}
 
-	var files []File
-	for name, path := range cmd.Val() {
-		files = append(files, File{Name: name, Path: path})
+	var files []models.File
+	// for name, path := range cmd.Val() {
+	// 	files = append(files, File{Name: name, Path: path})
+	// }
+	for fileData := range cmd.Val() {
+		fmt.Print((fileData))
 	}
 
 	return files, nil
@@ -164,34 +163,34 @@ func (f *FileRedis) GetFiles() ([]File, error) {
 
 // Deprecated: CollectFilesInFolder retrieves all the log files in the root directory
 // and returns them as a slice of File structs
-func (f *FileRedis) CollectFilesInFolder(path string) ([]File, error) {
-	var files []File
+// func (f *FileRedis) CollectFilesInFolder(path string) ([]File, error) {
+// 	var files []File
 
-	trimmedPath := strings.TrimSuffix(path, "/")
+// 	trimmedPath := strings.TrimSuffix(path, "/")
 
-	if trimmedPath == "" {
-		trimmedPath = "data"
-	}
+// 	if trimmedPath == "" {
+// 		trimmedPath = "data"
+// 	}
 
-	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", path))
-	if err != nil {
-		return nil, err
-	}
+// 	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", path))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
-		if filepath.Ext(path) != ".log" {
-			log.Printf("⚠️ Skipping file %s:", path)
-			return nil
-		}
+// 	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
+// 		if filepath.Ext(path) != ".log" {
+// 			// log.Printf("⚠️ Skipping file %s:", path)
+// 			return nil
+// 		}
 
-		if !info.IsDir() {
-			files = append(files, f.fileFromString(path))
-		}
+// 		if !info.IsDir() {
+// 			files = append(files, f.fileFromString(path))
+// 		}
 
-		return nil
-	})
-	return files, err
-}
+// 		return nil
+// 	})
+// 	return files, err
+// }
 
 func (f *FileRedis) NumberOfFilesInFolder() int {
 	return 0
@@ -217,7 +216,7 @@ func NewFileRedis(ctx context.Context, redisClient *redis.Client) *FileRedis {
 		ctx:         ctx,
 		rootDir:     rootDir,
 		redisClient: redisClient,
-		Files:       []File{},
+		Files:       []models.File{},
 		Key:         "go-xlogger:files",
 	}
 }

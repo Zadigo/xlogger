@@ -52,73 +52,73 @@ func (l *LogRedis) SaveTransform(strLines []string) (lines []LogLine, err error)
 	return logLines, cmd.Err()
 }
 
-// Deprecated: use files_redis.go
-func (l *LogRedis) GetLogs() error {
-	cmd := l.redisClient.SMembers(l.ctx, l.Key)
-	if cmd.Err() != nil {
-		return cmd.Err()
-	}
+// // Deprecated: use files_redis.go
+// func (l *LogRedis) GetLogs() error {
+// 	cmd := l.redisClient.SMembers(l.ctx, l.Key)
+// 	if cmd.Err() != nil {
+// 		return cmd.Err()
+// 	}
 
-	var logLines []LogLine
-	for _, data := range cmd.Val() {
-		var logLine LogLine
-		if err := json.Unmarshal([]byte(data), &logLine); err != nil {
-			return err
-		}
-		logLines = append(logLines, logLine)
-	}
-	return nil
-}
+// 	var logLines []LogLine
+// 	for _, data := range cmd.Val() {
+// 		var logLine LogLine
+// 		if err := json.Unmarshal([]byte(data), &logLine); err != nil {
+// 			return err
+// 		}
+// 		logLines = append(logLines, logLine)
+// 	}
+// 	return nil
+// }
 
-// Deprecated: use files_redis.go
-func (l *LogRedis) DeleteLogs() error {
-	cmd := l.redisClient.Del(l.ctx, l.Key)
-	return cmd.Err()
-}
+// // Deprecated: use files_redis.go
+// func (l *LogRedis) DeleteLogs() error {
+// 	cmd := l.redisClient.Del(l.ctx, l.Key)
+// 	return cmd.Err()
+// }
 
-// Deprecated: use files_redis.go
-func (l *LogRedis) BroadcastLog(logLine LogLine) {
-	l.mu.Lock()
-	l.broadcastCh <- logLine
-	l.mu.Unlock()
-}
+// // Deprecated: use files_redis.go
+// func (l *LogRedis) BroadcastLog(logLine LogLine) {
+// 	l.mu.Lock()
+// 	l.broadcastCh <- logLine
+// 	l.mu.Unlock()
+// }
 
-// Deprecated: use files_redis.go
-func (l *LogRedis) StartBroadcaster() <-chan error {
-	ch := make(chan error, 1)
+// // Deprecated: use files_redis.go
+// func (l *LogRedis) StartBroadcaster() <-chan error {
+// 	ch := make(chan error, 1)
 
-	go func() {
-		pubSub := l.redisClient.Subscribe(l.ctx, "logs_channel")
+// 	go func() {
+// 		pubSub := l.redisClient.Subscribe(l.ctx, "logs_channel")
 
-		for {
-			select {
-			case logLine := <-l.broadcastCh:
-				data, err := json.Marshal(logLine)
-				if err != nil {
-					ch <- err
-					continue
-				}
-				l.redisClient.Publish(l.ctx, "logs_channel", data)
-			case <-pubSub.Channel():
-			// case msg := <-redisCh:
-			// 	var logLine LogLine
-			// 	if err := json.Unmarshal([]byte(msg.Payload), &logLine); err != nil {
-			// 		continue
-			// 	}
-			// 	l.mu.Lock()
-			// 	l.broadcastCh <- logLine
-			// 	l.mu.Unlock()
-			// }
+// 		for {
+// 			select {
+// 			case logLine := <-l.broadcastCh:
+// 				data, err := json.Marshal(logLine)
+// 				if err != nil {
+// 					ch <- err
+// 					continue
+// 				}
+// 				l.redisClient.Publish(l.ctx, "logs_channel", data)
+// 			case <-pubSub.Channel():
+// 			// case msg := <-redisCh:
+// 			// 	var logLine LogLine
+// 			// 	if err := json.Unmarshal([]byte(msg.Payload), &logLine); err != nil {
+// 			// 		continue
+// 			// 	}
+// 			// 	l.mu.Lock()
+// 			// 	l.broadcastCh <- logLine
+// 			// 	l.mu.Unlock()
+// 			// }
 
-			case <-l.ctx.Done():
-				ch <- pubSub.Close()
-				return
-			}
-		}
-	}()
+// 			case <-l.ctx.Done():
+// 				ch <- pubSub.Close()
+// 				return
+// 			}
+// 		}
+// 	}()
 
-	return ch
-}
+// 	return ch
+// }
 
 // NewLogsRedis creates a new instance of LogRedis that is used to manage logs in Redis
 func NewLogsRedis(ctx context.Context, redisClient *redis.Client) *LogRedis {
