@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/base64"
+	"log"
 	"net/http"
 	"path"
 
@@ -44,7 +45,7 @@ func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Reque
 	httpErrors := HttpErrors{}
 
 	filesRedis := tickerapp.NewFileRedis(h.GetApp().GetAppContext(), h.GetApp().GetRedisClient())
-	files, err := filesRedis.GetFiles()
+	files, err := filesRedis.GetCachedFiles()
 	if err != nil {
 		httpErrors.FailedToCollectFiles(w, err)
 		return
@@ -58,12 +59,6 @@ func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Reque
 			httpErrors.FailedToCollectFiles(w, err)
 			return
 		}
-
-		// files, err = filesRedis.CollectFilesInFolder("/data")
-		// if err != nil {
-		// 	httpErrors.FailedToCollectFiles(w, err)
-		// 	return
-		// }
 
 		filesRedis.SaveFiles(files)
 	}
@@ -102,7 +97,8 @@ func (h *BaseRouteHandlers) GetLogsHandler(w http.ResponseWriter, r *http.Reques
 		fullPath := path.Join(h.GetApp().GetRootDir(), "data", string(decodedFileName))
 		strLogs, err := fileRedis.ReadFile(fullPath, h.serverConfig)
 		if err != nil {
-			httpErrors.FailedToReadFile(w)
+			log.Println("🔴 Failed to read file:", err)
+			httpErrors.FailedToReadFile(w, err)
 			return
 		}
 
@@ -114,11 +110,18 @@ func (h *BaseRouteHandlers) GetLogsHandler(w http.ResponseWriter, r *http.Reques
 		}
 	} else {
 		if logs, err = fileRedis.GetLogs(string(decodedFileName)); err != nil {
-			httpErrors.FailedToGetLogs(w)
+			httpErrors.FailedToGetLogs(w, err)
 			return
 		}
 	}
 
+	logs, err = resolveQuery(r, logs)
+	if err != nil {
+		httpErrors.FailedToGetLogs(w, err)
+		return
+	}
+
+	// Pagination
 	logs, err = PaginateData(r, logs)
 	if err != nil {
 		httpErrors.InvalidLimitOffset(w, err)

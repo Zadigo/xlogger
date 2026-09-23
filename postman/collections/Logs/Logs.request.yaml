@@ -1,4 +1,13 @@
 $kind: http-request
 url: "{{golang}}v1/files"
 method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("get files", () => {
+          pm.expect(pm.response.code).to.equal(200)
+          const name = pm.response.json()[0].name
+          pm.environment.set("fileId", btoa(name))
+      })
+    language: text/javascript
 order: 1790183673357

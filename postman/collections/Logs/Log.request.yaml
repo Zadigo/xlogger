@@ -1,4 +1,13 @@
 $kind: http-request
-url: "{{golang}}v1/files/{{fileId}}"
+url: "{{golang}}v1/files/{{fileId}}?limit=1&offset=0"
 method: GET
+queryParams:
+  - key: limit
+    value: "1"
+    disabled: false
+    description: ""
+  - key: offset
+    value: "0"
+    disabled: false
+    description: ""
 order: 2763421359313748

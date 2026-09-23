@@ -18,7 +18,7 @@ func (a *HttpErrors) BasicErrorMessage(w http.ResponseWriter) {
 }
 
 func (a *HttpErrors) InvalidFileId(w http.ResponseWriter) {
-	a.Detail = "The provided file ID is invalid."
+	a.Detail = "The provided file ID is invalid. Should be a base64 encoded string of the file name."
 	a.Message = "Invalid file ID."
 	a.SendErrorMessage(w)
 }

@@ -2,3 +2,5 @@ name: xLogger
 values:
   - key: golang
     value: ''
+  - key: fileId
+    value: ''

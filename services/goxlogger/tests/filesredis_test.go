@@ -6,10 +6,11 @@ import (
 
 	"github.com/Zadigo/goxlogger/internal/backend"
 	"github.com/Zadigo/goxlogger/internal/tickerapp"
+	"github.com/stretchr/testify/assert"
 )
 
-func instanceFixture() *tickerapp.FileRedis {
-	ctx := context.WithValue(context.Background(), "rootDir", "../")
+func instanceFixture(t *testing.T) *tickerapp.FileRedis {
+	ctx := context.WithValue(t.Context(), "rootDir", "../")
 
 	redisClient := backend.NewRedisBackend(ctx)
 	filesRedis := tickerapp.NewFileRedis(ctx, redisClient)
@@ -18,14 +19,41 @@ func instanceFixture() *tickerapp.FileRedis {
 }
 
 func TestGetFile(t *testing.T) {
+	instance := instanceFixture(t)
 
+	t.Run("should be able to get a cached file", func(t *testing.T) {
+		file, err := instance.GetFile("example1.log")
+
+		assert.NoError(t, err, err.Error())
+		assert.NotNil(t, file)
+	})
 }
 
-func TestReadFile(t *testing.T) {}
+func TestReadFile(t *testing.T) {
+	instance := instanceFixture(t)
+
+	t.Run("should be able to read a file", func(t *testing.T) {
+		logs, err := instance.ReadFile("../data/example1.log", nil)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, logs)
+		assert.True(t, len(logs) > 0)
+	})
+}
 
 func TestDeleteFile(t *testing.T) {}
 
-func TestGetLogs(t *testing.T) {}
+func TestGetLogs(t *testing.T) {
+	instance := instanceFixture(t)
+
+	t.Run("should be able to get cached logs", func(t *testing.T) {
+		logs, err := instance.GetLogs("example1.log")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, logs)
+		assert.True(t, len(logs) > 0)
+	})
+}
 
 func TestHasCachedData(t *testing.T) {}
 

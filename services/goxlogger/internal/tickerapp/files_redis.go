@@ -22,23 +22,25 @@ type FileRedis struct {
 	redisClient *redis.Client
 }
 
-// Deprecated: fileFromString creates a File struct from a given path and adds it to the Files slice
-// func (f *FileRedis) fileFromString(path string) File {
-// 	baseName := filepath.Base(path)
-
-// 	file := File{Name: baseName, Path: path}
-// 	f.Files = append(f.Files, file)
-
-// 	return file
-// }
-
 // GetFile retrieves a file from Redis by its name and returns it as a File struct
 func (f *FileRedis) GetFile(name string) (models.File, error) {
 	cmd := f.redisClient.HGet(f.ctx, f.Key, name)
 	if cmd.Err() != nil {
 		return models.File{}, cmd.Err()
 	}
-	return models.File{Name: name, Path: cmd.Val()}, nil
+
+	value := cmd.Val()
+	if value == "" {
+		return models.File{}, fmt.Errorf("file not found")
+	}
+
+	var file models.File
+	err := json.Unmarshal([]byte(value), &file)
+	if err != nil {
+		return models.File{}, err
+	}
+
+	return file, nil
 }
 
 // ReadFile reads the content of a log file and returns it as a slice of strings
@@ -144,53 +146,24 @@ func (f *FileRedis) SaveFiles(files []models.File) error {
 	return nil
 }
 
-func (f *FileRedis) GetFiles() ([]models.File, error) {
+func (f *FileRedis) GetCachedFiles() ([]models.File, error) {
 	cmd := f.redisClient.HGetAll(f.ctx, f.Key)
 	if cmd.Err() != nil {
 		return nil, cmd.Err()
 	}
 
 	var files []models.File
-	// for name, path := range cmd.Val() {
-	// 	files = append(files, File{Name: name, Path: path})
-	// }
-	for fileData := range cmd.Val() {
-		fmt.Print((fileData))
+	for _, data := range cmd.Val() {
+		var file models.File
+		err := json.Unmarshal([]byte(data), &file)
+		if err != nil {
+			continue
+		}
+		files = append(files, file)
 	}
 
 	return files, nil
 }
-
-// Deprecated: CollectFilesInFolder retrieves all the log files in the root directory
-// and returns them as a slice of File structs
-// func (f *FileRedis) CollectFilesInFolder(path string) ([]File, error) {
-// 	var files []File
-
-// 	trimmedPath := strings.TrimSuffix(path, "/")
-
-// 	if trimmedPath == "" {
-// 		trimmedPath = "data"
-// 	}
-
-// 	fullpath, err := filepath.Abs(f.rootDir + fmt.Sprintf("/%s", path))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
-// 		if filepath.Ext(path) != ".log" {
-// 			// log.Printf("⚠️ Skipping file %s:", path)
-// 			return nil
-// 		}
-
-// 		if !info.IsDir() {
-// 			files = append(files, f.fileFromString(path))
-// 		}
-
-// 		return nil
-// 	})
-// 	return files, err
-// }
 
 func (f *FileRedis) NumberOfFilesInFolder() int {
 	return 0
