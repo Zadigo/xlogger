@@ -38,6 +38,8 @@ func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// GetFilesHandler handles the HTTP request to retrieve the list of log files. It first checks 
+// the Redis cache for the files, and if not found, collects them from the "/data" folder.
 func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Request) {
 	httpErrors := HttpErrors{}
 
@@ -48,12 +50,20 @@ func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	
 	if len(files) == 0 {
-		files, err = filesRedis.CollectFilesInFolder("/data")
+		filesCollector := tickerapp.FileCollector{}
+		files, err = filesCollector.CollectFilesInFolder(h.GetApp().GetRootDir(), "/data")
 		if err != nil {
 			httpErrors.FailedToCollectFiles(w, err)
 			return
 		}
+
+		// files, err = filesRedis.CollectFilesInFolder("/data")
+		// if err != nil {
+		// 	httpErrors.FailedToCollectFiles(w, err)
+		// 	return
+		// }
 
 		filesRedis.SaveFiles(files)
 	}

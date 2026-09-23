@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{golang}}v1/files/{{fileId}}"
+method: GET
+order: 2763421359313748

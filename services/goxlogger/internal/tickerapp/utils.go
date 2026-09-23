@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 
@@ -13,12 +15,18 @@ type FileCollector struct {
 }
 
 // fileFromString creates a File struct from a given path and adds it to the Files slice
-func (fc *FileCollector) fileFromString(path string) File {
+func (fc *FileCollector) fileFromString(path string, info os.FileInfo) File {
 	baseName := filepath.Base(path)
 
-	file := File{Name: baseName, Path: path}
-	fc.Files = append(fc.Files, file)
+	file := File{
+		Uuid: uuid.NewString(),
+		Name: baseName,
+		Path: path,
+		Size: info.Size(),
+		LastModified: info.ModTime(),
+	}
 
+	fc.Files = append(fc.Files, file)
 	return file
 }
 
@@ -49,7 +57,7 @@ func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]File, err
 		}
 
 		if !info.IsDir() {
-			files = append(files, fc.fileFromString(path))
+			files = append(files, fc.fileFromString(path, info))
 		}
 
 		return nil

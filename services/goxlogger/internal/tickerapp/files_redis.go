@@ -16,8 +16,11 @@ import (
 
 // File represents a log file with its name and path
 type File struct {
+	Uuid string `json:"uuid"`
 	Name string `json:"name"`
 	Path string `json:"path"`
+	Size int64 `json:"size"`
+	LastModified time.Time `json:"last_modified"`
 }
 
 type FileRedis struct {
@@ -28,7 +31,7 @@ type FileRedis struct {
 	redisClient *redis.Client
 }
 
-// fileFromString creates a File struct from a given path and adds it to the Files slice
+// Deprecated: fileFromString creates a File struct from a given path and adds it to the Files slice
 func (f *FileRedis) fileFromString(path string) File {
 	baseName := filepath.Base(path)
 
@@ -159,7 +162,7 @@ func (f *FileRedis) GetFiles() ([]File, error) {
 	return files, nil
 }
 
-// CollectFilesInFolder retrieves all the log files in the root directory
+// Deprecated: CollectFilesInFolder retrieves all the log files in the root directory
 // and returns them as a slice of File structs
 func (f *FileRedis) CollectFilesInFolder(path string) ([]File, error) {
 	var files []File

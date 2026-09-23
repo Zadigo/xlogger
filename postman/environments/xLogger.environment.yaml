@@ -1,0 +1,4 @@
+name: xLogger
+values:
+  - key: golang
+    value: ''

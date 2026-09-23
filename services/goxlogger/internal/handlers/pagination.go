@@ -61,6 +61,5 @@ func PaginateData[T any](r *http.Request, data []T) ([]T, error) {
 	}
 
 	endIndex := min(offsetInt+limitInt, len(data))
-
 	return data[offsetInt:endIndex], nil
 }
