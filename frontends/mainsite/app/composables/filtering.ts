@@ -1,12 +1,22 @@
+import type { QueryParams } from '#shared/types/query'
+
 export const useFilteringComposable = createSharedComposable(() => {
-  const query = useUrlSearchParams() as {
-    successful?: string
-    status?: string
-    methods?: string
-    startDate?: string
-    endDate?: string
-    search?: string
-  }
+  const query = useUrlSearchParams() as QueryParams
+
+  const limitOffset = computed({
+    set: (value) => {
+      const params = useUrlSearchParams() as { limit?: string; offset?: string }
+      params.limit = value.limit
+      params.offset = value.offset
+    },
+    get: () => {
+      const params = useUrlSearchParams() as { limit?: string; offset?: string }
+      return {
+        limit: params.limit ?? '100',
+        offset: params.offset ?? '0'
+      }
+    }
+  })
 
   const search = ref<string>('')
 
@@ -36,12 +46,16 @@ export const useFilteringComposable = createSharedComposable(() => {
     query.endDate = newEndDate
   })
 
+  const queryDict = computed(() => ({ ...query }))
+
   return {
+    limitOffset,
     search,
     onlySuccessfulRequests,
     statusCodes,
     httpMethods,
     startDate,
-    endDate
+    endDate,
+    queryDict
   }
 })

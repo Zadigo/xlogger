@@ -25,7 +25,7 @@
         v-model:column-filters="columnFilters" 
         v-model:column-visibility="columnVisibility"
         :data="fileContents" 
-        :loading="!hasLogs"
+        :loading="status === 'pending'"
         :columns="columns"
       >
         <template #expanded="{ row }">
@@ -60,29 +60,16 @@ definePageMeta({
 const table = useTemplateRef('table')
 
 /**
- * Data
+ * Filtering
  */
 
+const { queryDict, limitOffset } = useFilteringComposable()
+
 const encodedName = useRoute().params.id as string
-
-const limitOffset = computed({
-  set: (value) => {
-    const params = useUrlSearchParams() as { limit?: string; offset?: string }
-    params.limit = value.limit
-    params.offset = value.offset
-  },
-  get: () => {
-    const params = useUrlSearchParams() as { limit?: string; offset?: string }
-    return {
-      limit: params.limit ?? '100',
-      offset: params.offset ?? '0'
-    }
-  }
-})
-
-const { data: fileContents, refresh } = useAsyncData<LogFileContent[]>('logfiles', () => $fetch<LogFileContent[]>(`/api/files/${encodedName}`, {
+const { data: fileContents, refresh, status } = await useAsyncData<LogFileContent[]>(`logfiles-${encodedName}`, async () => await $fetch<LogFileContent[]>(`/api/files/${encodedName}`, {
   method: 'GET',
   query: {
+    ...queryDict.value,
     limit: limitOffset.value.limit,
     offset: limitOffset.value.offset
   }
@@ -90,7 +77,9 @@ const { data: fileContents, refresh } = useAsyncData<LogFileContent[]>('logfiles
   default: () => []
 })
 
-const hasLogs = computed(() => isDefined(fileContents) && fileContents.value.length > 0)
+watch(queryDict, () => {
+  refresh()
+})
 
 // onMounted(() => {
 //   useInfiniteScroll(
@@ -115,12 +104,6 @@ const hasLogs = computed(() => isDefined(fileContents) && fileContents.value.len
 //     }
 //   )
 // })
-
-/**
- * Filtering
- */
-
-useFilteringComposable()
 
 /**
  * Table
