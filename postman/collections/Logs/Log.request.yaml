@@ -1,13 +1,37 @@
 $kind: http-request
-url: "{{golang}}v1/files/{{fileId}}?limit=1&offset=0"
+url: "{{golang}}v1/files/{{fileId}}?limit=100&offset=0&startDate=2026-05-08"
 method: GET
 queryParams:
   - key: limit
-    value: "1"
+    value: "100"
     disabled: false
     description: ""
   - key: offset
     value: "0"
+    disabled: false
+    description: ""
+  - key: endDate
+    value: null
+    disabled: true
+    description: ""
+  - key: methods
+    value: null
+    disabled: true
+    description: ""
+  - key: search
+    value: null
+    disabled: true
+    description: ""
+  - key: status
+    value: null
+    disabled: true
+    description: ""
+  - key: successful
+    value: "1"
+    disabled: true
+    description: ""
+  - key: startDate
+    value: 2026-05-08
     disabled: false
     description: ""
 order: 2763421359313748

@@ -36,24 +36,29 @@ const (
 )
 
 func queryDate(dateValue string, logs []tickerapp.LogLine, direction string) ([]tickerapp.LogLine, error) {
+	if dateValue == "" {
+		return logs, nil
+	}
+	
 	var filteredLogs []tickerapp.LogLine
 
-	date, err := time.Parse(time.RFC3339, dateValue)
+	date, err := time.Parse("2006-01-02", dateValue)
 	if err != nil {
-		return nil, err
+		return []tickerapp.LogLine{}, err
 	}
 
 	for _, log := range logs {
-		logDateTime, err := time.Parse(time.RFC1123, log.DateTime)
+		logDateTime, err := time.Parse(tickerapp.DateLayout, log.DateTime)
 		if err != nil {
-			return nil, err
+			return []tickerapp.LogLine{}, err
 		}
 
-		if direction == DirectionAfter {
+		switch direction {
+		case DirectionAfter:
 			if logDateTime.After(date) || logDateTime.Equal(date) {
 				filteredLogs = append(filteredLogs, log)
 			}
-		} else if direction == DirectionBefore {
+		case DirectionBefore:
 			if logDateTime.Before(date) || logDateTime.Equal(date) {
 				filteredLogs = append(filteredLogs, log)
 			}
@@ -109,17 +114,13 @@ func queryStatus(status string, logs []tickerapp.LogLine) []tickerapp.LogLine {
 }
 
 func querySuccessful(successful string, logs []tickerapp.LogLine) []tickerapp.LogLine {
-	if successful == "" {
+	if successful == "" || successful != "1" {
 		return logs
 	}
 
 	var filteredLogs []tickerapp.LogLine
-	success, err := strconv.ParseBool(successful)
-	if err != nil {
-		return logs
-	}
 	for _, log := range logs {
-		if (log.StatusCode >= 200 && log.StatusCode < 300) == success {
+		if (log.StatusCode >= 200 && log.StatusCode < 300) {
 			filteredLogs = append(filteredLogs, log)
 		}
 	}
@@ -127,46 +128,33 @@ func querySuccessful(successful string, logs []tickerapp.LogLine) []tickerapp.Lo
 }
 
 func resolveQuery(r *http.Request, logs []tickerapp.LogLine) ([]tickerapp.LogLine, error) {
+	var err error
+
 	filteredLogs := logs
 
 	startDate := r.URL.Query().Get("startDate")
-	if startDate != "" {
-		var err error
-		filteredLogs, err = queryDate(startDate, filteredLogs, DirectionAfter)
-		if err != nil {
-			return []tickerapp.LogLine{}, err
-		}
+	filteredLogs, err = queryDate(startDate, filteredLogs, DirectionAfter)
+	if err != nil {
+		return []tickerapp.LogLine{}, err
 	}
 
 	endDate := r.URL.Query().Get("endDate")
-	if endDate != "" {
-		var err error
-		filteredLogs, err = queryDate(endDate, filteredLogs, DirectionBefore)
-		if err != nil {
-			return []tickerapp.LogLine{}, err
-		}
+	filteredLogs, err = queryDate(endDate, filteredLogs, DirectionBefore)
+	if err != nil {
+		return []tickerapp.LogLine{}, err
 	}
 
 	methods := r.URL.Query().Get("methods")
-	if methods != "" {
-		filteredLogs = queryMethods(methods, filteredLogs)
-	}
+	filteredLogs = queryMethods(methods, filteredLogs)
 	
 	search := r.URL.Query().Get("search")
-	if search != "" {
-		filteredLogs = querySearch(search, filteredLogs)
-	}
+	filteredLogs = querySearch(search, filteredLogs)
 
-	
 	status := r.URL.Query().Get("status")
-	if status != "" {
-		filteredLogs = queryStatus(status, filteredLogs)
-	}
+	filteredLogs = queryStatus(status, filteredLogs)
 
 	successfull := r.URL.Query().Get("successful")
-	if successfull != "" {
-		filteredLogs = querySuccessful(successfull, filteredLogs)
-	}
+	filteredLogs = querySuccessful(successfull, filteredLogs)
 
 	return filteredLogs, nil
 }

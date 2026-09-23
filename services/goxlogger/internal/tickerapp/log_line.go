@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+const (
+	DateLayout = "02/Jan/2006:15:04:05 -0700"
+)
+
 // MetaData struct contains various boolean fields that indicate
 // specific characteristics of the path of the request which can
 // be useful for further vulnerability analysis.
@@ -111,8 +115,7 @@ func (l *LogLine) ParseLine() (line *LogLine, err error) {
 	l.BodyBytesSent, _ = strconv.Atoi(matched[8])
 
 	// Date parsing
-	dateLayout := "02/Jan/2006:15:04:05 -0700"
-	parsedDate, err := time.Parse(dateLayout, matched[3])
+	parsedDate, err := time.Parse(DateLayout, matched[3])
 
 	if err == nil {
 		l.RemoteDate = parsedDate.Format("2006-01-02")
