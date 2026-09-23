@@ -36,13 +36,13 @@ func (l *LogRedis) Transform(strLogs []string) []LogLine {
 
 // SaveTransform transforms the given string logs into LogLine structs and saves them in Redis
 func (l *LogRedis) SaveTransform(strLines []string) (lines []LogLine, err error) {
-	var values []any
+	values := make([]any, len(strLines))
 
 	logLines := l.Transform(strLines)
 
-	for _, logLine := range logLines {
+	for i, logLine := range logLines {
 		if data, err := json.Marshal(logLine); err == nil {
-			values = append(values, data)
+			values[i] = data
 		} else {
 			return nil, err
 		}

@@ -65,6 +65,6 @@ const items: NavigationMenuItem[] = [
 ]
 
 const side = ref<'left' | 'right'>('left')
-const variant = ref<'floating' | 'inset'>('inset')
-const collapsible = ref<'none' | 'offcanvas'>('offcanvas')
+const variant = ref<'floating' | 'inset' | 'sidebar'>('inset')
+const collapsible = ref<'none' | 'offcanvas' | 'icon'>('icon')
 </script>
