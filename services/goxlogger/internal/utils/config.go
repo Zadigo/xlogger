@@ -6,23 +6,20 @@ import (
 	"path"
 
 	"github.com/goccy/go-yaml"
+	"github.com/redis/go-redis/v9"
 )
 
 type LogServerConfig struct {
-	Interval string `yaml:"interval"`
-	Logs     struct {
-		Folder string `yaml:"folder"`
-	} `yaml:"logs"`
+	Interval string   `yaml:"interval"`
+	Logs     []string `yaml:"logs"` // Directory for the logs
 }
 
-type ServerConfig struct {
+type ServerOptions struct {
 	LogServer LogServerConfig `yaml:"log_server"`
-	Redis     struct {
-		Addr string `yaml:"addr"`
-	} `yaml:"redis"`
+	Redis     *redis.Client   `yaml:"-"`
 }
 
-func (c *ServerConfig) Load(ctx context.Context) error {
+func (c *ServerOptions) Load(ctx context.Context) error {
 	rootDir := ctx.Value("rootDir").(string)
 	filePath := path.Join(rootDir, "config.yaml")
 

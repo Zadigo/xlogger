@@ -1,0 +1,62 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "config.schema.json",
+    "title": "config.yaml",
+    "description": "Configuration for the log server",
+    "type": "object",
+    "required": ["log_server"],
+    "additionalProperties": false,
+    "properties": {
+        "log_server": {
+            "type": "object",
+            "description": "Configuration for the log server",
+            "properties": {
+                "interval": {
+                    "type": "string",
+                    "description": "Interval at which the cron shoud analyze the logs"
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Folders containing the logs to analyze",
+                        "uniqueItems": true,
+                        "minItems": 1
+                    }
+                }
+            }
+        },
+        "db": {
+            "type": "object",
+            "required": ["provider"],
+            "properties": {
+                "provider": {
+                    "type": "string",
+                    "enum": ["sqlite", "postgres", "redis"],
+                    "default": "sqlite"
+                },
+                "user": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "minLength": 5
+                },
+                "password": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "minLength": 5
+                },
+                "port": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "minimum": 0
+                }
+            }
+        }
+    }
+}

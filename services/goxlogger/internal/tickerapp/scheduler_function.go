@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
-func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *utils.ServerConfig, redisClient *redis.Client) {
+func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *utils.ServerOptions, redisClient *redis.Client) {
 	fileRedis := NewFileRedis(ctx, redisClient)
 
 	// logFiles, err := fileRedis.CollectFilesInFolder(serverConfig.LogServer.Logs.Folder)
@@ -20,20 +21,26 @@ func logFileAnalyzer(ctx context.Context, ch chan<- error, serverConfig *utils.S
 	}
 
 	fileCollector := FileCollector{}
-	logFiles, err := fileCollector.CollectFilesInFolder(rootDir, serverConfig.LogServer.Logs.Folder)
-	if err != nil {
-		ch <- fmt.Errorf("🔴 Could not get log files: %w", err)
-		return
+
+	allFiles := []models.File{}
+	for _, folder := range serverConfig.LogServer.Logs {
+		logFiles, err := fileCollector.CollectFilesInFolder(rootDir, folder)
+		if err != nil {
+			ch <- fmt.Errorf("🔴 Could not get log files: %w", err)
+			return
+		}
+		allFiles = append(allFiles, logFiles...)
+
 	}
 
 	// Check the number of log files locally and those registered in Redis,
 	// if the number defers, add the missing files to Redis
 
-	fileRedis.SaveFiles(logFiles)
+	fileRedis.SaveFiles(allFiles)
 
-	log.Printf("📁 Found %d log files", len(logFiles))
+	log.Printf("📁 Found %d log files", len(allFiles))
 
-	for _, logFile := range logFiles {
+	for _, logFile := range allFiles {
 		strLogs, err := fileRedis.ReadFile(logFile.Path, serverConfig)
 		if err != nil {
 			log.Printf("🔴 Could not read file %s: %s\n", logFile.Path, err)

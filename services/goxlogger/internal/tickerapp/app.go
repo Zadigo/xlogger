@@ -19,9 +19,9 @@ type LogsApp struct {
 	debugMode bool
 }
 
-func (l *LogsApp) Start(server models.MainServerInterface) {
+func (l *LogsApp) Start(server models.MainServerInterface) error {
 	l.isStarted.Store(true)
-	
+
 	serverConfig := server.GetConfig()
 	log.Printf("🟢 Starting log server with interval %s\n", serverConfig.LogServer.Interval)
 
@@ -42,14 +42,15 @@ func (l *LogsApp) Start(server models.MainServerInterface) {
 	for {
 		select {
 		case err := <-ch:
-			log.Printf("🔴 Log server error: %s", err)
+			return err
 		case <-l.ctx.Done():
 			l.scheduler.Stop()
 			l.isStarted.Store(false)
 
-			close(ch)
+			defer close(ch)
 
 			log.Print("🟢 Log server stopped")
+			return nil
 		}
 	}
 }

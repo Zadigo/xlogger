@@ -14,13 +14,13 @@ type ErrorInterface interface {
 }
 
 type BaseServerInterface interface {
-	Start()
+	Start(ctx context.Context) error
 }
 
 type MainServerInterface interface {
 	BaseServerInterface
 	GetContext() context.Context
-	GetConfig() *utils.ServerConfig
+	GetConfig() *utils.ServerOptions
 	GetRedisDb() *redis.Client
 }
 

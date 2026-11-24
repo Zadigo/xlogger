@@ -8,10 +8,15 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/Zadigo/goxlogger/internal/backend"
 	"github.com/Zadigo/goxlogger/internal/mainapp"
 	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/joho/godotenv"
 )
+
+func preStartup(ctx context.Context, options *utils.ServerOptions) {
+	options.Redis = backend.NewRedisBackend(ctx)
+}
 
 func main() {
 	godotenv.Load(".env")
@@ -28,16 +33,13 @@ func main() {
 	ctx = context.WithValue(ctx, "rootDir", rootDir)
 	ctx = context.WithValue(ctx, "debugMode", os.Getenv("DEBUG_MODE") == "true")
 
-	config := &utils.ServerConfig{}
+	config := &utils.ServerOptions{}
 	config.Load(ctx)
 
-	// app := httpapp.NewApp(ctx)
-	// err = app.Start()
-
+	preStartup(ctx, config)
 	app := mainapp.NewMainServerApp(ctx, config)
-	app.Start()
-
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = app.Start(ctx)
+	if err != nil {
+		log.Print(err)
+	}
 }

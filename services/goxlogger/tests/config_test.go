@@ -8,11 +8,11 @@ import (
 )
 
 func TestLogServerConfig(t *testing.T) {
-	config := utils.ServerConfig{}
+	config := utils.ServerOptions{}
 	t.Run("Should load YAML config", func(t *testing.T) {
 		err := config.Load(t.Context())
 		assert.Nil(t, err)
 		assert.Equal(t, "* * * * *", config.LogServer.Interval)
-		assert.Equal(t, "data", config.LogServer.Logs.Folder)
+		assert.Equal(t, "data", config.LogServer.Logs)
 	})
 }

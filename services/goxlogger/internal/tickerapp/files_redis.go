@@ -22,7 +22,7 @@ func logRedisKey(name string) string {
 }
 
 type FileRedis struct {
-	Key         string `json:"key"`
+	Key         string        `json:"key"`
 	Files       []models.File `json:"files"`
 	ctx         context.Context
 	rootDir     string
@@ -51,7 +51,7 @@ func (f *FileRedis) GetFile(name string) (models.File, error) {
 }
 
 // ReadFile reads the content of a log file and returns it as a slice of strings
-func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerConfig) ([]string, error) {
+func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerOptions) ([]string, error) {
 	file, err := os.Open(path)
 
 	var logs []string = make([]string, 0)
@@ -67,7 +67,7 @@ func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerConfig) ([]s
 		line := scanner.Text()
 		logs = append(logs, line)
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		return logs, err
 	}
@@ -78,19 +78,19 @@ func (f *FileRedis) ReadFile(path string, serverConfig *utils.ServerConfig) ([]s
 func (f *FileRedis) DeleteFile() error {
 	return nil
 }
- 
+
 // GetLogs returns the parsed log lines stored under name. Lines that fail
 // to parse are skipped and logged rather than silently dropped.
 func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
 	if name == "" {
 		return nil, errors.New("name cannot be empty")
 	}
- 
+
 	vals, err := f.redisClient.LRange(f.ctx, logRedisKey(name), 0, -1).Result()
 	if err != nil {
 		return nil, fmt.Errorf("🔴 Fetching logs for %q: %w", name, err)
 	}
- 
+
 	logs := make([]LogLine, 0, len(vals))
 	for _, raw := range vals {
 		line := LogLine{RawLine: raw}
@@ -100,7 +100,7 @@ func (f *FileRedis) GetLogs(name string) ([]LogLine, error) {
 		}
 		logs = append(logs, line)
 	}
- 
+
 	return logs, nil
 }
 
