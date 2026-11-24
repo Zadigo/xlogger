@@ -41,14 +41,8 @@ func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]models.Fi
 	}
 
 	fc.Files = make([]models.File, 0, 16)
-
-	trimmedPath := strings.TrimSuffix(path, "/")
-
-	if trimmedPath == "" {
-		trimmedPath = "data"
-	}
-
-	fullpath, err := filepath.Abs(filepath.Join(rootDir, trimmedPath))
+	
+	fullpath, err := filepath.Abs(filepath.Join(rootDir, path))
 	if err != nil {
 		return nil, err
 	}
