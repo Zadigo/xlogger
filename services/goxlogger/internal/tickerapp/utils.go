@@ -1,7 +1,7 @@
 package tickerapp
 
 import (
-	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,7 +9,6 @@ import (
 	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/google/uuid"
 )
-
 
 type FileCollector struct {
 	Files []models.File
@@ -20,10 +19,10 @@ func (fc *FileCollector) fileFromString(path string, info os.FileInfo) models.Fi
 	baseName := filepath.Base(path)
 
 	file := models.File{
-		Uuid: uuid.NewString(),
-		Name: baseName,
-		Path: path,
-		Size: info.Size(),
+		Uuid:         uuid.NewString(),
+		Name:         baseName,
+		Path:         path,
+		Size:         info.Size(),
 		LastModified: info.ModTime(),
 	}
 
@@ -38,7 +37,11 @@ func (fc *FileCollector) NumberOfFilesInFolder() int {
 // CollectFilesInFolder retrieves all the log files in the root directory
 // and returns them as a slice of File structs
 func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]models.File, error) {
-	var files []models.File
+	if path == "" || path == "/" {
+		path = "data"
+	}
+
+	files := make([]models.File, 0, 16)
 
 	trimmedPath := strings.TrimSuffix(path, "/")
 
@@ -46,22 +49,27 @@ func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]models.Fi
 		trimmedPath = "data"
 	}
 
-	fullpath, err := filepath.Abs(fmt.Sprintf("%s/%s", rootDir, trimmedPath))
+	fullpath, err := filepath.Abs(filepath.Join(rootDir, trimmedPath))
 	if err != nil {
 		return nil, err
 	}
 
-	err = filepath.Walk(fullpath, func(path string, info os.FileInfo, err error) error {
+	err = filepath.WalkDir(fullpath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if filepath.Ext(path) != ".log" {
-			// log.Printf("⚠️ Skipping file %s:", path)
 			return nil
 		}
 
-		if !info.IsDir() {
-			files = append(files, fc.fileFromString(path, info))
+		if fileInfo, err := d.Info(); err != nil {
+			return err
+		} else {
+			files = append(files, fc.fileFromString(path, fileInfo))
+			return nil
 		}
-
-		return nil
 	})
+
 	return files, err
 }
