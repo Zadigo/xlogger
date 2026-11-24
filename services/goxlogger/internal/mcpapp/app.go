@@ -2,7 +2,6 @@ package mcpapp
 
 import (
 	"context"
-	"log"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -12,15 +11,21 @@ type McpApp struct {
 	server *mcp.Server
 }
 
-func (a *McpApp) Start() {
-	// Use the official SDK's native HTTP transport struct directly
+func (a *McpApp) Start(ctx context.Context) error {
 	httpTransport := &mcp.StreamableServerTransport{}
 
+	chErr := make(chan error, 1)
+	
 	go func() {
-		if err := a.server.Run(a.ctx, httpTransport); err != nil {
-			log.Fatal(err)
-		}
+		chErr <- a.server.Run(a.ctx, httpTransport)
 	}()
+
+	select {
+	case err := <-chErr:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func NewMcpApp(ctx context.Context) *McpApp {

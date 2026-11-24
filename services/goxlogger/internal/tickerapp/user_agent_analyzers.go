@@ -225,8 +225,9 @@ func (b *BrowserAnalyzer) setNext(next AnalyzerInterface) {
 
 func NewUserAgentAnalysis(value string) *UserAgent {
 	agent := &UserAgent{
-		RawValue:    value,
-		WindowsInfo: &Windows{},
+		RawValue:      value,
+		WindowsInfo:   &Windows{},
+		MacintoshInfo: &Macintosh{},
 	}
 
 	baseAnalyzer := &BaseAnalyzer{}

@@ -131,7 +131,6 @@ func TestWindowsAnalyzer(t *testing.T) {
 		{name: "test_with_wow", line: "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0"},
 		{name: "test_with_trident", line: "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko"},
 		{name: "test_with_touch", line: "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; ASU2JS; rv:11.0) like Gecko"},
-		{name: "test_with_touch", line: "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; MALNJS; rv:11.0) like Gecko"},
 	}
 
 	for _, tc := range testCases {

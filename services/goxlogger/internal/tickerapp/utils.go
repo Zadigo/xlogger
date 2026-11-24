@@ -4,7 +4,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/google/uuid"
@@ -41,7 +40,7 @@ func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]models.Fi
 	}
 
 	fc.Files = make([]models.File, 0, 16)
-	
+
 	fullpath, err := filepath.Abs(filepath.Join(rootDir, path))
 	if err != nil {
 		return nil, err
