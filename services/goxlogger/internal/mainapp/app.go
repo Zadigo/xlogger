@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/Zadigo/goxlogger/internal/httpapp"
+	"github.com/Zadigo/goxlogger/internal/mcpapp"
 	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/Zadigo/goxlogger/internal/tickerapp"
 	"github.com/Zadigo/goxlogger/internal/utils"
@@ -36,16 +37,22 @@ func (m *MainServerApp) Start(ctx context.Context) error {
 	defer m.options.Redis.Close()
 
 	os.Setenv("XLOGGER_STATE", "true")
+	defer os.Unsetenv("XLOGGER_STATE")
 
 	log.Print("⚡️ Starting main server...")
 
 	httpServer := httpapp.NewApp(ctx)
 	tickerServer := tickerapp.NewLogsApp(ctx)
+	mcpServer := mcpapp.NewMcpApp(ctx)
 
 	g := errgroup.Group{}
 
 	g.Go(func() error {
 		return httpServer.Start()
+	})
+
+	g.Go(func() error {
+		return mcpServer.Start(ctx)
 	})
 
 	g.Go(func() error {

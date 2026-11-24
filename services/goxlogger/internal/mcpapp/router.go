@@ -6,5 +6,10 @@ import (
 
 func (a *McpApp) loadTools() {
 	handler := &McpTools{}
-	a.server.AddTool(&mcp.Tool{Description: "Get the logs present in the folder"}, handler.GetLogs)
+	tool := &mcp.Tool{
+		Title:       "Get Logs",
+		Name:        "get_logs",
+		Description: "Get the logs present in the folder",
+	}
+	mcp.AddTool(a.server, tool, handler.GetLogs)
 }
