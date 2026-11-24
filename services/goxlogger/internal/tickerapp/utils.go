@@ -15,7 +15,7 @@ type FileCollector struct {
 }
 
 // fileFromString creates a File struct from a given path and adds it to the Files slice
-func (fc *FileCollector) fileFromString(path string, info os.FileInfo) models.File {
+func (fc *FileCollector) fileFromString(path string, info os.FileInfo) {
 	baseName := filepath.Base(path)
 
 	file := models.File{
@@ -27,7 +27,6 @@ func (fc *FileCollector) fileFromString(path string, info os.FileInfo) models.Fi
 	}
 
 	fc.Files = append(fc.Files, file)
-	return file
 }
 
 func (fc *FileCollector) NumberOfFilesInFolder() int {
@@ -41,7 +40,7 @@ func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]models.Fi
 		path = "data"
 	}
 
-	files := make([]models.File, 0, 16)
+	fc.Files = make([]models.File, 0, 16)
 
 	trimmedPath := strings.TrimSuffix(path, "/")
 
@@ -66,10 +65,10 @@ func (fc *FileCollector) CollectFilesInFolder(rootDir, path string) ([]models.Fi
 		if fileInfo, err := d.Info(); err != nil {
 			return err
 		} else {
-			files = append(files, fc.fileFromString(path, fileInfo))
+			fc.fileFromString(path, fileInfo)
 			return nil
 		}
 	})
 
-	return files, err
+	return fc.Files, err
 }
