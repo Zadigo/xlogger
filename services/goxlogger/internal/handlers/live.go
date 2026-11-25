@@ -16,35 +16,35 @@ type BaseRouteHandlers struct {
 	serverConfig *utils.ServerOptions
 }
 
-func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := CustomRequestUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		http.Error(w, "Failed to upgrade to WebSocket", http.StatusInternalServerError)
-		return
-	}
-	defer conn.Close()
+// func (h *BaseRouteHandlers) LiveWsHandler(w http.ResponseWriter, r *http.Request) {
+// 	conn, err := CustomRequestUpgrader.Upgrade(w, r, nil)
+// 	if err != nil {
+// 		http.Error(w, "Failed to upgrade to WebSocket", http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer conn.Close()
 
-	middleware := WebsocketMiddleware{}
-	middleware.Handle(conn)
+// 	middleware := WebsocketMiddleware{}
+// 	middleware.Handle(conn)
 
-	tickerapp.NewFileRedis(h.GetApp().GetAppContext(), h.GetApp().GetRedisClient())
+// 	tickerapp.NewFileRedis(r.Context(), h.GetApp().GetRedisClient())
 
-	for {
-		var message any
-		err := conn.ReadJSON(&message)
+// 	for {
+// 		var message any
+// 		err := conn.ReadJSON(&message)
 
-		if err != nil {
-			break
-		}
-	}
-}
+// 		if err != nil {
+// 			break
+// 		}
+// 	}
+// }
 
-// GetFilesHandler handles the HTTP request to retrieve the list of log files. It first checks
+// // GetFilesHandler handles the HTTP request to retrieve the list of log files. It first checks
 // the Redis cache for the files, and if not found, collects them from the "/data" folder.
 func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Request) {
 	httpErrors := HttpErrors{}
 
-	filesRedis := tickerapp.NewFileRedis(h.GetApp().GetAppContext(), h.GetApp().GetRedisClient())
+	filesRedis := tickerapp.NewFileRedis(r.Context(), h.GetApp().GetRedisClient())
 	files, err := filesRedis.GetCachedFiles()
 	if err != nil {
 		httpErrors.FailedToCollectFiles(w, err)
@@ -53,7 +53,7 @@ func (h *BaseRouteHandlers) GetFilesHandler(w http.ResponseWriter, r *http.Reque
 
 	if len(files) == 0 {
 		filesCollector := &tickerapp.FileCollector{}
-		files, err = filesCollector.CollectFilesInFolder(h.GetApp().GetRootDir(), "/data")
+		files, err = filesCollector.CollectFilesInFolder(utils.GetRootDir(r.Context()), "/data")
 		if err != nil {
 			httpErrors.FailedToCollectFiles(w, err)
 			return
@@ -86,14 +86,14 @@ func (h *BaseRouteHandlers) GetLogsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	fileRedis := tickerapp.NewFileRedis(h.GetApp().GetAppContext(), h.GetApp().GetRedisClient())
+	fileRedis := tickerapp.NewFileRedis(r.Context(), h.GetApp().GetRedisClient())
 
 	var cachedLogs []tickerapp.LogLine
 
 	// Check if the cached data for the file exists in Redis
 	result := fileRedis.HasCachedData(string(decodedFileName))
 	if !result {
-		fullPath := path.Join(h.GetApp().GetRootDir(), "data", string(decodedFileName))
+		fullPath := path.Join(utils.GetRootDir(r.Context()), "data", string(decodedFileName))
 		strLogs, err := fileRedis.ReadFile(fullPath, h.serverConfig)
 		if err != nil {
 			log.Println("🔴 Failed to read file:", err)
@@ -101,7 +101,7 @@ func (h *BaseRouteHandlers) GetLogsHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		logRedis := tickerapp.NewLogsRedis(h.GetApp().GetAppContext(), h.GetApp().GetRedisClient())
+		logRedis := tickerapp.NewLogsRedis(r.Context(), h.GetApp().GetRedisClient())
 		cachedLogs, err = logRedis.SaveTransform(strLogs)
 		if err != nil {
 			httpErrors.FailedToReadFile(w, err)

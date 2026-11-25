@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/Zadigo/goxlogger/internal/handlers"
-	"github.com/Zadigo/goxlogger/internal/handlers/jwt"
 	"github.com/Zadigo/goxlogger/internal/httpapp/middlewares"
+	"github.com/Zadigo/goxlogger/internal/mcpapp"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 )
@@ -26,25 +26,22 @@ func (a *App) loadRoutes() {
 	a.router.Use(middlewares.JsonHeartbeat("/health"))
 	a.router.Use(middleware.Timeout(60 * time.Second))
 
-	a.router.Route("/v1/files", a.loadBaseRoutes)
+	a.router.Route("/v1/", a.loadBaseRoutes)
 }
 
 func (a *App) loadBaseRoutes(r chi.Router) {
 	baseHandlers := &handlers.BaseRouteHandlers{}
 	baseHandlers.SetApp(a)
 
-	r.Get("/", baseHandlers.GetFilesHandler)
-
-	r.Route("/{fileId}", func(r chi.Router) {
-		r.Use(middlewares.UrlParamMiddleware("fileId"))
-		r.Get("/", baseHandlers.GetLogsHandler)
+	mcpApp := &mcpapp.McpApp{}
+	r.Route("/mcp", func(r chi.Router) {
+		r.Handle("/*", mcpApp.ChiHandle())
 	})
-}
 
-func (a *App) loadAuthRoutes(r chi.Router) {
-	authHandlers := &jwt.JwtHandler{}
-	authHandlers.SetApp(a)
+	// r.Get("/files", baseHandlers.GetFilesHandler)
 
-	r.Post("/login", authHandlers.LoginHandler)
-	// r.Post("/refresh", authHandlers.)
+	// r.Route("/{fileId}", func(r chi.Router) {
+	// 	r.Use(middlewares.UrlParamMiddleware("fileId"))
+	// 	r.Get("/", baseHandlers.GetLogsHandler)
+	// })
 }

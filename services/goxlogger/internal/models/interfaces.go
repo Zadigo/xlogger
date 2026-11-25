@@ -25,8 +25,6 @@ type MainServerInterface interface {
 }
 
 type AppInterface interface {
-	Start() error
+	BaseServerInterface
 	GetRedisClient() *redis.Client
-	GetAppContext() context.Context
-	GetRootDir() string
 }

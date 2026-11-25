@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -18,13 +17,12 @@ import (
 )
 
 type App struct {
-	ctx         context.Context
 	router      *chi.Mux
 	chanErr     chan error
 	redisClient *redis.Client
 }
 
-func (a *App) Start() error {
+func (a *App) Start(ctx context.Context) error {
 	if a.router == nil {
 		panic("Router is not initialized. Please call SetupRouter() before starting the server.")
 	}
@@ -33,12 +31,12 @@ func (a *App) Start() error {
 		panic("Redis client is not initialized. Please call NewApp() to initialize the Redis client.")
 	}
 
-	if a.ctx == nil {
+	if ctx == nil {
 		panic("Context is not initialized. Please call NewApp() to initialize the context.")
 	}
 
 	var cancel context.CancelFunc
-	a.ctx, cancel = context.WithCancel(a.ctx)
+	ctx, cancel = context.WithCancel(ctx)
 	defer cancel()
 
 	port, err := strconv.ParseUint(os.Getenv("GO_PORT"), 10, 16)
@@ -59,7 +57,7 @@ func (a *App) Start() error {
 	select {
 	case err := <-a.chanErr:
 		return fmt.Errorf("🔴 %s HTTP server error: %v", os.Getenv("SERVICE_NAME"), err)
-	case <-a.ctx.Done():
+	case <-ctx.Done():
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -68,39 +66,12 @@ func (a *App) Start() error {
 
 		// close(a.chanErr)
 
-		return errors.Join(fmt.Errorf("🔴 Shutting down %s HTTP server...", os.Getenv("SERVICE_NAME")), shutdownErr, a.ctx.Err())
+		return errors.Join(fmt.Errorf("🔴 Shutting down %s HTTP server...", os.Getenv("SERVICE_NAME")), shutdownErr, ctx.Err())
 	}
 }
 
 func (a *App) GetRedisClient() *redis.Client {
 	return a.redisClient
-}
-
-func (a *App) GetAppContext() context.Context {
-	return a.ctx
-}
-
-func (a *App) GetRootDir() string {
-	strRootDir := a.ctx.Value("rootDir")
-	if strRootDir == nil {
-		log.Fatal("❌ Root directory is not set in the context")
-	}
-	rootDir, ok := strRootDir.(string)
-	if !ok {
-		log.Fatal("❌ Root directory in context is not a string")
-	}
-
-	if rootDir == "" {
-		log.Fatal("❌ Root directory is empty")
-	}
-
-	absRootDir, err := filepath.Abs(rootDir)
-	if err != nil {
-		log.Fatalf("❌ Failed to get absolute path of root directory: %v", err)
-
-	}
-
-	return absRootDir
 }
 
 func NewApp(ctx context.Context) models.AppInterface {
@@ -111,7 +82,6 @@ func NewApp(ctx context.Context) models.AppInterface {
 	redisClient := backend.NewRedisBackend(ctx)
 
 	app := &App{
-		ctx:         ctx,
 		router:      nil,
 		chanErr:     make(chan error),
 		redisClient: redisClient,

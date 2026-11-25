@@ -5,6 +5,7 @@ import (
 
 	"github.com/Zadigo/goxlogger/internal/models"
 	"github.com/Zadigo/goxlogger/internal/tickerapp"
+	"github.com/Zadigo/goxlogger/internal/utils"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -19,7 +20,7 @@ type McpTools struct{}
 func (t *McpTools) GetLogs(ctx context.Context, req *mcp.CallToolRequest, in GetLogsInput) (*mcp.CallToolResult, GetLogsOutput, error) {
 	collector := tickerapp.FileCollector{}
 
-	rootDir := ctx.Value("rootDir").(string)
+	rootDir := utils.GetRootDir(ctx)
 	if files, err := collector.CollectFilesInFolder(rootDir, ""); err != nil {
 		return nil, GetLogsOutput{}, err
 	} else {
